@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lumen OS
 
-## Getting Started
+**Sistema de Gestión Integral para Agencias Creativas**
 
-First, run the development server:
+Lumen OS es una plataforma todo-en-uno que centraliza la captación de clientes, CRM, gestión de proyectos, aprobación de entregables, facturación y portal del cliente.
 
+---
+
+## 🛠️ Tech Stack
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | Next.js 15, React 19, Tailwind CSS v4 |
+| Backend | API Routes (Next.js) + Prisma ORM |
+| Base de Datos | PostgreSQL 16 |
+| Auth | NextAuth.js v5 |
+| Email | Resend |
+| Notificaciones | Telegram Bot + Discord Webhooks |
+| Automatización | n8n (self-hosted) |
+| Infraestructura | Docker Compose |
+
+---
+
+## 🚀 Setup Rápido
+
+### Requisitos
+- Node.js 18+
+- Docker Desktop
+- Git
+
+### 1. Clonar el repositorio
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/TU_USUARIO/lumen-os.git
+cd lumen-os
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Instalar dependencias
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Levantar la base de datos
+```bash
+docker compose up -d
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Configurar variables de entorno
+```bash
+cp .env.example .env.local
+# Editar .env.local con tus credenciales
+```
 
-## Learn More
+### 5. Inicializar la base de datos
+```bash
+npx prisma db push
+npx prisma db seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 6. Iniciar el servidor de desarrollo
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Abre [http://localhost:3000](http://localhost:3000) para ver la landing page.  
+Abre [http://localhost:3000/login](http://localhost:3000/login) para entrar al dashboard.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 📁 Estructura del Proyecto
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+lumen-os/
+├── app/                    # Páginas y API Routes (Next.js App Router)
+│   ├── (public)/           # Landing page pública
+│   ├── dashboard/          # Panel de administración (CRM)
+│   ├── portal/[token]/     # Portal del cliente
+│   └── api/                # Endpoints del backend
+├── components/             # Componentes React reutilizables
+│   ├── crm/                # Kanban, filtros, pipelines
+│   ├── portal/             # Componentes del portal del cliente
+│   ├── sections/           # Secciones de la landing page
+│   └── ui/                 # Design system base
+├── lib/                    # Utilidades y servicios
+├── prisma/                 # Schema y migraciones de la BD
+├── types/                  # Definiciones TypeScript
+└── docker-compose.yml      # Infraestructura (PostgreSQL)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📄 Licencia
+
+Privado — © 2026 Lumen Creativo. Todos los derechos reservados.

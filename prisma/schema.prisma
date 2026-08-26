@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ AUTENTICACIÓN ============
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // bcrypt hash
+  role      Role     @default(TEAM)
+  avatar    String?
+  bio       String?
+  phone     String?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads        Lead[]        @relation("AssignedLeads")
+  tasks        Task[]        @relation("AssignedTasks")
+  deliverables Deliverable[] @relation("CreatedDeliverables")
+  comments     Comment[]
+}
+
+enum Role {
+  ADMIN
+  PROGRAMMER
+  COMMUNITY_MANAGER
+  CONTENT_CREATOR
+  STRATEGIST
+  DESIGNER
+  SALES
+  TEAM
+}
+
+// ============ CRM ============
+
+model Pipeline {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  color       String           @default("blue")
+  isDefault   Boolean          @default(false)
+  order       Int              @default(0)
+  columns     PipelineColumn[]
+  leads       Lead[]
+  createdAt   DateTime         @default(now())
+}
+
+model PipelineColumn {
+  id         String   @id @default(cuid())
+  name       String
+  color      String   @default("gray")
+  order      Int      @default(0)
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  pipelineId String
+  leads      Lead[]
+}
+
+model Lead {
+  id              String          @id @default(cuid())
+  name            String          // "LEAD-2026-001"
+  leadName        String          // Nombre de la persona/empresa
+  title           String?         // "Renovación Web"
+  email           String?
+  phone           String?
+  source          String?         // website, referral, social...
+  value           Decimal?        // Valor estimado del deal
+  notes           String?
+  tags            String[]        @default([])
+  status          String          @default("Lead")
+
+  pipeline        Pipeline?       @relation(fields: [pipelineId], references: [id])
+  pipelineId      String?
+  column          PipelineColumn? @relation(fields: [columnId], references: [id])
+  columnId        String?
+  assignedTo      User?           @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  assignedToId    String?
+
+  lastContactedAt DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+// ============ CLIENTES ============
+
+model Client {
+  id              String   @id @default(cuid())
+  name            String
+  portalToken     String   @unique @default(cuid())
+  email           String?
+  phone           String?
+  whatsapp        String?
+  instagram       String?
+  website         String?
+  industry        String?
+  address         String?
+  taxId           String?
+  contactPerson   String?
+  paymentDay      String?
+  notes           String?
+  logo            String?
+
+  socialCredentials SocialCredential[]
+  invoices          Invoice[]
+  deliverables      Deliverable[]
+  tasks             Task[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SocialCredential {
+  id       String @id @default(cuid())
+  platform String
+  username String
+  password String
+
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+}
+
+// ============ ENTREGABLES ============
+
+model Deliverable {
+  id             String            @id @default(cuid())
+  title          String
+  description    String?
+  type           DeliverableType   @default(IMAGE)
+  url            String
+  carouselUrls   String[]          @default([])
+  status         DeliverableStatus @default(PENDING)
+  priority       Priority          @default(NORMAL)
+  currentVersion Int               @default(1)
+  deadline       DateTime?
+  approvedAt     DateTime?
+  tags           String[]          @default([])
+
+  client      Client? @relation(fields: [clientId], references: [id])
+  clientId    String?
+  clientName  String? // Legacy display name
+  createdBy   User?   @relation("CreatedDeliverables", fields: [createdById], references: [id])
+  createdById String?
+
+  versions DeliverableVersion[]
+  feedback Feedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum DeliverableType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  LINK
+  CAROUSEL
+}
+
+enum DeliverableStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+  IN_REVISION
+}
+
+model DeliverableVersion {
+  id            String      @id @default(cuid())
+  version       Int
+  url           String
+  carouselUrls  String[]    @default([])
+  notes         String?
+  deliverable   Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  deliverableId String
+  createdAt     DateTime    @default(now())
+}
+
+model Feedback {
+  id            String      @id @default(cuid())
+  comment       String
+  author        String      // "client" o "team"
+  authorName    String?
+  version       Int?
+  deliverable   Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  deliverableId String
+  createdAt     DateTime    @default(now())
+}
+
+// ============ TAREAS ============
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(OPEN)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  project     String?
+  tags        String[]   @default([])
+
+  assignedTo   User?   @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedToId String?
+  client       Client? @relation(fields: [clientId], references: [id])
+  clientId     String?
+
+  subtasks Subtask[]
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TaskStatus {
+  OPEN
+  WORKING
+  PENDING_REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Subtask {
+  id        String  @id @default(cuid())
+  title     String
+  completed Boolean @default(false)
+  task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    String
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    String
+  createdAt DateTime @default(now())
+}
+
+// ============ FACTURACIÓN ============
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  client        Client        @relation(fields: [clientId], references: [id])
+  clientId      String
+  status        InvoiceStatus @default(DRAFT)
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime
+  subtotal      Decimal
+  tax           Decimal       @default(0)
+  total         Decimal
+  currency      String        @default("USD")
+  notes         String?
+  paidAt        DateTime?
+  paidAmount    Decimal?
+
+  items InvoiceItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal
+  total       Decimal
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId   String
+}

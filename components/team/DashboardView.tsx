@@ -35,23 +35,37 @@ export default function DashboardView() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const fetchWithTimeout = async (url: string, ms = 5000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), ms);
+        try {
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(id);
+            return res;
+        } catch {
+            clearTimeout(id);
+            return null; // Timeout o error de red
+        }
+    };
+
     const fetchStats = async () => {
         setIsLoading(true);
         setError("");
         try {
-            // Fetch all data in parallel
+            // Fetch all data in parallel (con timeout de 5s cada uno)
             const [clientsRes, leadsRes, deliverablesRes, financeRes] = await Promise.all([
-                fetch('/api/clients'),
-                fetch('/api/leads'),
-                fetch('/api/deliverables'),
-                fetch('/api/erp/finance-global')
+                fetchWithTimeout('/api/clients'),
+                fetchWithTimeout('/api/leads'),
+                fetchWithTimeout('/api/deliverables'),
+                fetchWithTimeout('/api/erp/finance-global'),
             ]);
 
             // Parse responses
-            const clientsData = clientsRes.ok ? await clientsRes.json() : { clients: [] };
-            const leadsData = leadsRes.ok ? await leadsRes.json() : { leads: [] };
-            const deliverablesData = deliverablesRes.ok ? await deliverablesRes.json() : { deliverables: [] };
-            const financeData = financeRes.ok ? await financeRes.json() : { invoices: [], payments: [] };
+            const clientsData = clientsRes?.ok ? await clientsRes.json() : { clients: [] };
+            const leadsData = leadsRes?.ok ? await leadsRes.json() : { leads: [] };
+            const deliverablesData = deliverablesRes?.ok ? await deliverablesRes.json() : { deliverables: [] };
+            const financeData = financeRes?.ok ? await financeRes.json() : { invoices: [], payments: [] };
+
 
             // Calculate stats
             const clients = clientsData.clients || [];

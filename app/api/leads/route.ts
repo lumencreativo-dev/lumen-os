@@ -1,38 +1,18 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { db } from "@/lib/db";
-import { MOCK_LEADS } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
 import { sendWebhook, validateApiKey } from "@/lib/webhooks";
+import { notifyNewLead } from "@/lib/discord";
 
-/**
- * Verifica autenticación: acepta cookie de sesión O API Key válida
- */
-async function isAuthenticated(request: Request): Promise<boolean> {
-    // Primero verificar API Key (para integraciones externas como n8n)
-    if (validateApiKey(request)) {
-        return true;
-    }
-
-    // Sino, verificar cookie de sesión (para usuarios del dashboard)
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("lumen_session");
-    return !!sessionCookie;
-}
-
-export async function GET(request: Request) {
+export async function GET() {
     try {
-        if (!(await isAuthenticated(request))) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        // Try to read from JSON DB
-        let leads = db.read('leads');
-
-        // If no data in JSON, initialize with MOCK_LEADS
-        if (!leads || leads.length === 0) {
-            db.write('leads', MOCK_LEADS);
-            leads = MOCK_LEADS;
-        }
+        const leads = await prisma.lead.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                pipeline: true,
+                column: true,
+                assignedTo: { select: { id: true, name: true } },
+            },
+        });
 
         return NextResponse.json({ leads });
     } catch (error) {
@@ -43,30 +23,54 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        // POST permite API Key para que n8n pueda crear leads
-        if (!(await isAuthenticated(request))) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const body = await request.json();
 
-        // Add ID and dates
-        const newLead = {
-            ...body,
-            name: `LEAD-${Date.now()}`,
-            creation: new Date().toISOString(),
-            status: "Lead",
-            pipelineId: body.pipelineId || 'prospectos',
-            columnId: body.columnId || 'nuevo'
-        };
+        // Buscar la columna por defecto si no se especifica
+        let columnId = body.columnId;
+        let pipelineId = body.pipelineId;
 
-        const leads = db.read('leads') || [];
-        db.write('leads', [newLead, ...leads]);
+        if (!columnId && !pipelineId) {
+            const defaultPipeline = await prisma.pipeline.findFirst({
+                where: { isDefault: true },
+                include: { columns: { orderBy: { order: 'asc' }, take: 1 } },
+            });
+            if (defaultPipeline) {
+                pipelineId = defaultPipeline.id;
+                columnId = defaultPipeline.columns[0]?.id;
+            }
+        }
 
-        // Enviar webhook para automatizaciones (n8n -> Mautic, email, etc.)
+        const newLead = await prisma.lead.create({
+            data: {
+                name: `LEAD-${Date.now()}`,
+                leadName: body.lead_name || body.leadName || body.nombre || 'Sin nombre',
+                title: body.title,
+                email: body.email_id || body.email,
+                phone: body.mobile_no || body.phone || body.whatsapp,
+                source: body.source || 'dashboard',
+                value: body.value ? parseFloat(body.value) : undefined,
+                notes: body.notes || body.necesidad,
+                tags: body.tags || [],
+                status: body.status || 'Lead',
+                pipelineId,
+                columnId,
+                assignedToId: body.assignedToId,
+            },
+            include: { pipeline: true, column: true },
+        });
+
+        // Webhooks y notificaciones
         sendWebhook('lead.created', {
             lead: newLead,
-            source: body.source || 'dashboard'
+            source: body.source || 'dashboard',
+        }).catch(console.error);
+
+        notifyNewLead({
+            nombre: newLead.leadName,
+            email: newLead.email || '',
+            whatsapp: newLead.phone || undefined,
+            institucion: newLead.leadName,
+            necesidad: newLead.title || undefined,
         }).catch(console.error);
 
         return NextResponse.json({ lead: newLead });
@@ -78,51 +82,62 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
     try {
-        if (!(await isAuthenticated(request))) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const body = await request.json();
-        const { name, ...updates } = body;
+        const { name, id, ...updates } = body;
 
-        if (!name) {
-            return NextResponse.json({ error: "Missing name" }, { status: 400 });
+        const leadId = id || name;
+        if (!leadId) {
+            return NextResponse.json({ error: "Missing id or name" }, { status: 400 });
         }
 
-        const leads = db.read<any>('leads') || [];
-        const index = leads.findIndex((l: any) => l.name === name);
+        // Buscar lead por id o por name
+        const existingLead = await prisma.lead.findFirst({
+            where: { OR: [{ id: leadId }, { name: leadId }] },
+        });
 
-        if (index === -1) {
+        if (!existingLead) {
             return NextResponse.json({ error: "Lead not found" }, { status: 404 });
         }
 
-        const oldLead = leads[index];
-        const stageChanged = updates.columnId && updates.columnId !== oldLead.columnId;
+        const stageChanged = updates.columnId && updates.columnId !== existingLead.columnId;
 
-        // Update lead
-        leads[index] = { ...oldLead, ...updates };
-        db.write('leads', leads);
+        const updatedLead = await prisma.lead.update({
+            where: { id: existingLead.id },
+            data: {
+                leadName: updates.leadName || updates.lead_name,
+                title: updates.title,
+                email: updates.email || updates.email_id,
+                phone: updates.phone || updates.mobile_no,
+                source: updates.source,
+                value: updates.value ? parseFloat(updates.value) : undefined,
+                notes: updates.notes,
+                tags: updates.tags,
+                status: updates.status,
+                pipelineId: updates.pipelineId,
+                columnId: updates.columnId,
+                assignedToId: updates.assignedToId,
+                lastContactedAt: updates.lastContactedAt ? new Date(updates.lastContactedAt) : undefined,
+            },
+            include: { pipeline: true, column: true },
+        });
 
-        // Enviar webhook apropiado
+        // Webhook
         if (stageChanged) {
-            // Evento específico para cambio de etapa (útil para n8n triggers)
             sendWebhook('lead.stage_changed', {
-                lead: leads[index],
-                previousStage: oldLead.columnId,
-                newStage: updates.columnId
+                lead: updatedLead,
+                previousStage: existingLead.columnId,
+                newStage: updates.columnId,
             }).catch(console.error);
         } else {
             sendWebhook('lead.updated', {
-                lead: leads[index],
-                changes: Object.keys(updates)
+                lead: updatedLead,
+                changes: Object.keys(updates),
             }).catch(console.error);
         }
 
-        return NextResponse.json({ success: true, lead: leads[index] });
-
+        return NextResponse.json({ success: true, lead: updatedLead });
     } catch (error) {
         console.error("PUT Lead Error:", error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });
     }
 }
-
