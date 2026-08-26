@@ -1,21 +1,11 @@
 import { NextResponse } from "next/server";
-import { sendWebhook, validateApiKey } from "@/lib/webhooks";
-
-const getErpConfig = () => ({
-    url: process.env.ERPNEXT_URL,
-    headers: {
-        "Content-Type": "application/json",
-        "Authorization": `token ${process.env.ERPNEXT_API_KEY}:${process.env.ERPNEXT_API_SECRET}`
-    }
-});
+import { prisma } from "@/lib/prisma";
+import { sendWebhook } from "@/lib/webhooks";
+import { notifyNewLead } from "@/lib/discord";
+import { sendLeadConfirmationEmail, sendTeamNotificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
     try {
-        // Permitir acceso con API Key (para formularios externos) o cookies internas (aunque esta ruta suele ser pública)
-        // Por seguridad en landing forms, a veces se deja abierta, 
-        // pero validaremos apiKey si está presente para priorizar solicitudes autenticadas.
-        // NOTA: Para formularios públicos sin backend, esta ruta suele quedar abierta.
-
         const body = await request.json();
         const { nombre, email, whatsapp, institucion, necesidad, tipoInstitucion, instagram } = body;
 
@@ -27,95 +17,111 @@ export async function POST(request: Request) {
             );
         }
 
-        const { url: apiUrl, headers } = getErpConfig();
+        // 2. Buscar el pipeline y columna por defecto
+        const defaultPipeline = await prisma.pipeline.findFirst({
+            where: { isDefault: true },
+            include: { columns: { orderBy: { order: 'asc' }, take: 1 } },
+        });
 
-        let leadName;
-        let erpCreated = false;
-
-        // Intentar crear en ERPNext si hay credenciales
-        if (apiUrl) {
-            try {
-                // A. Crear Lead
-                const leadData = {
-                    lead_name: nombre,
-                    email_id: email,
-                    mobile_no: whatsapp,
-                    title: institucion,
-                    status: "Lead",
-                    source: body.source || "Website"
-                };
-
-                console.log("📤 Intentando crear Lead en ERPNext...");
-                const response = await fetch(`${apiUrl}/api/resource/Lead`, {
-                    method: "POST",
-                    headers,
-                    body: JSON.stringify(leadData),
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    leadName = result.data.name;
-                    erpCreated = true;
-                    console.log(`✅ Lead creado en ERPNext: ${leadName}`);
-
-                    // B. Agregar Nota con detalles extra
-                    await fetch(`${apiUrl}/api/resource/Comment`, {
-                        method: "POST",
-                        headers,
-                        body: JSON.stringify({
-                            reference_doctype: "Lead",
-                            reference_name: leadName,
-                            content: `Institución: ${institucion} (${tipoInstitucion || 'N/A'}) \nInstagram: ${instagram || 'N/A'} \nNecesidad: ${necesidad}`,
-                            comment_type: "Comment",
-                        })
-                    }).catch(e => console.warn("Nota ERP falló", e));
-
-                } else {
-                    console.warn(`⚠️ ERPNext respondió error: ${response.status}`);
-                }
-            } catch (error) {
-                console.error("❌ Error de conexión con ERPNext:", error);
-            }
-        }
-
-        // Fallback Local si ERP falló
-        if (!leadName) {
-            leadName = `LOCAL-LEAD-${Date.now()}`;
-            console.log("⚠️ Creando Lead en modo LOCAL (ERPNext no disponible)");
-        }
-
-        // 2. Enviar Webhook a n8n (El núcleo de la automatización)
-        // n8n se encargará de: Telegram, Email de bienvenida, Mautic, etc.
-        const webhookPayload = {
-            lead: {
-                id: leadName,
-                name: nombre,
-                email,
+        // 3. Crear Lead en la base de datos
+        const lead = await prisma.lead.create({
+            data: {
+                name: `LEAD-${Date.now()}`,
+                leadName: nombre,
+                title: institucion || 'Contacto desde Landing',
+                email: email,
                 phone: whatsapp,
-                institution: institucion,
-                instagram,
-                need: necesidad,
-                source: body.source || "Landing Page"
+                source: 'website',
+                notes: necesidad ? `Tipo: ${tipoInstitucion || 'N/A'}\nInstagram: ${instagram || 'N/A'}\nNecesidad: ${necesidad}` : undefined,
+                status: 'Lead',
+                pipelineId: defaultPipeline?.id,
+                columnId: defaultPipeline?.columns[0]?.id,
             },
-            erpSynced: erpCreated
-        };
+        });
 
-        // 2. Enviar Webhook a n8n
-        // Usamos await para asegurar que se envíe antes de cerrar la conexión
-        try {
-            await sendWebhook('lead.created', webhookPayload);
-        } catch (webhookError) {
-            console.error("⚠️ Error enviando webhook en create-lead:", webhookError);
+        console.log(`✅ Lead creado: ${lead.name}`);
+
+        // 4. Notificaciones (todas en paralelo, sin bloquear)
+        const notifications = [];
+
+        // Discord
+        notifications.push(
+            notifyNewLead({
+                nombre,
+                email,
+                whatsapp,
+                institucion,
+                necesidad,
+            }).catch(e => console.error("Discord error:", e))
+        );
+
+        // Webhook n8n
+        notifications.push(
+            sendWebhook('lead.created', {
+                lead: {
+                    id: lead.name,
+                    name: nombre,
+                    email,
+                    phone: whatsapp,
+                    institution: institucion,
+                    instagram,
+                    need: necesidad,
+                    source: "Landing Page",
+                },
+            }).catch(e => console.error("Webhook error:", e))
+        );
+
+        // Email de confirmación al lead
+        notifications.push(
+            sendLeadConfirmationEmail({
+                nombre,
+                email,
+                whatsapp: whatsapp || '',
+                institucion,
+                instagram,
+                necesidad,
+                leadId: lead.name,
+            }).catch(e => console.error("Email confirmación error:", e))
+        );
+
+        // Email al equipo
+        notifications.push(
+            sendTeamNotificationEmail({
+                nombre,
+                email,
+                whatsapp: whatsapp || '',
+                institucion,
+                instagram,
+                necesidad,
+                leadId: lead.name,
+            }).catch(e => console.error("Email equipo error:", e))
+        );
+
+        // Telegram
+        const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+        const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+        if (telegramToken && telegramChatId) {
+            const message = `🚀 *Nuevo Lead desde la Web*\n\n👤 *Nombre:* ${nombre}\n🏢 *Institución:* ${institucion || 'N/A'}\n📧 *Email:* ${email}\n📱 *WhatsApp:* ${whatsapp || 'N/A'}\n📝 *Necesidad:* ${necesidad || 'No especificada'}`;
+
+            notifications.push(
+                fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: telegramChatId, text: message, parse_mode: "Markdown" }),
+                }).catch(e => console.error("Telegram error:", e))
+            );
         }
+
+        // Ejecutar todas las notificaciones en paralelo
+        await Promise.allSettled(notifications);
 
         return NextResponse.json({
             success: true,
-            lead: leadName,
-            message: erpCreated ? "Lead procesado correctamente" : "Lead guardado localmente (ERP inestable)"
+            lead: lead.name,
+            message: "Lead procesado correctamente",
         });
-
     } catch (error) {
-        console.error("❌ Error CRÍTICO en API Route:", error);
+        console.error("❌ Error CRÍTICO en create-lead:", error);
         return NextResponse.json(
             { error: "Error interno del servidor" },
             { status: 500 }

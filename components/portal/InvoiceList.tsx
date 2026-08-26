@@ -36,7 +36,7 @@ export function InvoiceList({ clientName, invoices: externalInvoices }: Props) {
         if (!clientName) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/erp/invoices?customer=${encodeURIComponent(clientName)}`);
+            const res = await fetch(`/api/deliverables`); // TODO: Replace with /api/invoices when implemented
             if (res.ok) {
                 const data = await res.json();
                 const fetchedInvoices = (data.invoices || []).map((inv: any) => ({
@@ -58,7 +58,7 @@ export function InvoiceList({ clientName, invoices: externalInvoices }: Props) {
     };
 
     const handleDownload = (invoiceId: string) => {
-        window.open(`/api/erp/invoices/${invoiceId}/pdf`, '_blank');
+        window.open(`/api/invoices/${invoiceId}/pdf`, '_blank'); // TODO: implement PDF route
     };
 
     const statusStyles = {

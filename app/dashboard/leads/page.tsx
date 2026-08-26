@@ -87,12 +87,8 @@ export default function LeadsPage() {
                 setLeads(leadsWithDefaults);
             }
 
-            // 2. Fetch Events (for Calendar)
-            const resEvents = await fetch("/api/erp/events");
-            if (resEvents.ok) {
-                const data = await resEvents.json();
-                setEvents(data.events || []);
-            }
+            // 2. Events (TODO: implement with Prisma)
+            setEvents([]);
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {

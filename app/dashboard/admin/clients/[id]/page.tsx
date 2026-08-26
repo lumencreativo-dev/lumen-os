@@ -68,7 +68,7 @@ export default function ClientProfilePage() {
     const loadClientData = async () => {
         setLoading(true);
         // 1. Get Client Basic Info
-        const clientData = clientService.getById(id);
+        const clientData = await clientService.getById(id);
 
         if (clientData) {
             setClient(clientData);
@@ -80,15 +80,13 @@ export default function ClientProfilePage() {
             const storedBrand = localStorage.getItem(`lumen_brand_${id}`);
             if (storedBrand) setBrandKit(JSON.parse(storedBrand));
 
-            // 3. Load ERP Financials
-            if (clientData.erpId) {
+            // 3. Load Financials
+            if (clientData.id) {
                 setLoadingFinancials(true);
                 try {
-                    const res = await fetch(`/api/erp/client-details?id=${encodeURIComponent(clientData.name)}`); // Often lookup by name in ERPNext if erpId matches name
-                    if (res.ok) {
-                        const data = await res.json();
-                        setFinancials(data);
-                    }
+                    // TODO: Load financials from Prisma (invoices, payments)
+                    // For now, just set empty
+                    setFinancials(null);
                 } catch (e) {
                     console.error("Failed to load financials", e);
                 } finally {

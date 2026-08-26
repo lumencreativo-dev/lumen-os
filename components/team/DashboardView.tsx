@@ -57,7 +57,7 @@ export default function DashboardView() {
                 fetchWithTimeout('/api/clients'),
                 fetchWithTimeout('/api/leads'),
                 fetchWithTimeout('/api/deliverables'),
-                fetchWithTimeout('/api/erp/finance-global'),
+                Promise.resolve(new Response(JSON.stringify({ invoices: [], payments: [] }), { status: 200 })),
             ]);
 
             // Parse responses

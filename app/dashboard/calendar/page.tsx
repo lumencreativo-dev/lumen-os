@@ -53,14 +53,11 @@ export default function PlannerPage() {
         const client = clients.find(c => c.id === selectedClient);
         if (!client) return;
 
-        // Use ERP ID or fallback to name
-        const erpIdentifier = client.erpId || client.name;
-
         try {
-            const res = await fetch(`/api/erp/tasks?id=${encodeURIComponent(erpIdentifier)}`);
+            const res = await fetch(`/api/tasks`);
             if (res.ok) {
                 const data = await res.json();
-                setGridItems(data);
+                setGridItems(data.tasks || []);
             }
         } catch (e) {
             console.error("Failed to fetch items", e);
@@ -76,19 +73,16 @@ export default function PlannerPage() {
         }
 
         const client = clients.find(c => c.id === selectedClient);
-        const erpIdentifier = client?.erpId || client?.name;
 
-        // Prepare Item
         const itemToSave = {
             ...itemData,
-            clientId: erpIdentifier, // Send ERP Name
-            // If editing, keep ID
+            clientId: client?.id,
             id: editingItem?.id
         };
 
         try {
             const method = editingItem ? 'PUT' : 'POST';
-            const res = await fetch('/api/erp/tasks', {
+            const res = await fetch('/api/tasks', {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(itemToSave)
@@ -96,9 +90,9 @@ export default function PlannerPage() {
 
             if (res.ok) {
                 setShowModal(false);
-                fetchItems(); // Refresh
+                fetchItems();
             } else {
-                alert("Error al guardar en ERPNext");
+                alert("Error al guardar");
             }
         } catch (e) {
             console.error(e);
@@ -108,10 +102,10 @@ export default function PlannerPage() {
 
     const handleDelete = async () => {
         if (!editingItem) return;
-        if (!confirm("¿Eliminar tarea de ERPNext?")) return;
+        if (!confirm("¿Eliminar esta tarea?")) return;
 
         try {
-            const res = await fetch(`/api/erp/tasks?id=${editingItem.id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/tasks?id=${editingItem.id}`, { method: 'DELETE' });
             if (res.ok) {
                 setShowModal(false);
                 fetchItems();

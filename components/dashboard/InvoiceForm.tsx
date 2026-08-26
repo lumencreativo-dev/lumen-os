@@ -109,7 +109,7 @@ export default function InvoiceForm({ isOpen, onClose, onSuccess }: InvoiceFormP
         setIsSaving(true);
 
         try {
-            const res = await fetch('/api/erp/invoices', {
+            const res = await fetch('/api/invoices', { // TODO: implement invoices API
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

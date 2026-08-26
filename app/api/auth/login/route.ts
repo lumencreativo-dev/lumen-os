@@ -1,40 +1,42 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { username, password } = body;
+        const { email, password } = body;
 
-        // 1. Get Users from "DB"
-        const users = db.read<any>('users');
+        if (!email || !password) {
+            return NextResponse.json({ error: "Email y contraseña requeridos" }, { status: 400 });
+        }
 
-        // 2. Validate Credentials
-        const user = users.find((u: any) => u.username === username && u.password === password);
+        const user = await prisma.user.findUnique({
+            where: { email },
+        });
 
         if (!user) {
             return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
         }
 
-        // 3. Create Session
-        const sessionData = {
-            username: user.username,
-            role: user.role,
-            name: user.name
-        };
+        const isValid = await bcrypt.compare(password, user.password);
+        if (!isValid) {
+            return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
+        }
 
-        const cookieStore = await cookies();
-        cookieStore.set("lumen_session", JSON.stringify(sessionData), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 60 * 60 * 24 * 7, // 1 week
-            path: "/",
+        // Return user data (excluding password)
+        return NextResponse.json({
+            success: true,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role.toLowerCase(),
+                avatar: user.avatar || user.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+            },
         });
-
-        return NextResponse.json({ success: true, role: user.role });
-
     } catch (error) {
+        console.error("Login Error:", error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });
     }
 }

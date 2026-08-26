@@ -6,12 +6,6 @@ import { motion } from "framer-motion";
 import { Loader2, Lock, Mail, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Credenciales de acceso (MVP - después usar base de datos)
-const VALID_USERS = [
-    { email: "kevin@lumencreativo.lat", password: "lumen2026", name: "Kevin Flores", role: "admin" },
-    { email: "admin@lumencreativo.lat", password: "lumen2026", name: "Administrador", role: "admin" },
-];
-
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
@@ -25,27 +19,33 @@ export default function LoginPage() {
         setError("");
         setIsLoading(true);
 
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
 
-        // Validar credenciales
-        const user = VALID_USERS.find(
-            u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-        );
+            const data = await res.json();
 
-        if (user) {
-            // Guardar sesión en localStorage (MVP - después usar cookies/JWT)
-            localStorage.setItem("lumen_session", JSON.stringify({
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                loginAt: new Date().toISOString()
-            }));
+            if (res.ok && data.success) {
+                // Guardar sesión en localStorage (se migrará a NextAuth después)
+                localStorage.setItem("lumen_session", JSON.stringify({
+                    id: data.user.id,
+                    email: data.user.email,
+                    name: data.user.name,
+                    role: data.user.role,
+                    avatar: data.user.avatar,
+                    loginAt: new Date().toISOString()
+                }));
 
-            // Redirigir al dashboard
-            router.push("/dashboard");
-        } else {
-            setError("Credenciales incorrectas. Verifica tu email y contraseña.");
+                router.push("/dashboard");
+            } else {
+                setError(data.error || "Credenciales incorrectas.");
+                setIsLoading(false);
+            }
+        } catch {
+            setError("Error de conexión. Verifica que el servidor esté corriendo.");
             setIsLoading(false);
         }
     };

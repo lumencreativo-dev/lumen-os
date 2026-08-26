@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
     request: Request,
@@ -8,59 +8,46 @@ export async function GET(
     const { id } = await params;
 
     try {
-        // 1. Security Check
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get("lumen_session");
+        const lead = await prisma.lead.findFirst({
+            where: { OR: [{ id }, { name: id }] },
+            include: {
+                pipeline: true,
+                column: true,
+                assignedTo: { select: { id: true, name: true, avatar: true } },
+            },
+        });
 
-        if (!sessionCookie) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        // 2. Config
-        const apiUrl = process.env.ERPNEXT_URL;
-        const apiKey = process.env.ERPNEXT_API_KEY;
-        const apiSecret = process.env.ERPNEXT_API_SECRET;
-
-        if (!apiUrl || !apiKey || !apiSecret) {
-            return NextResponse.json({ error: "Server Config Error" }, { status: 500 });
-        }
-
-        const headers = {
-            "Authorization": `token ${apiKey}:${apiSecret}`,
-            "Content-Type": "application/json",
-        };
-
-        // 3. Fetch Lead Details
-        const leadRes = await fetch(`${apiUrl}/api/resource/Lead/${id}`, { headers, cache: 'no-store' });
-
-        if (!leadRes.ok) {
+        if (!lead) {
             return NextResponse.json({ error: "Lead not found" }, { status: 404 });
         }
 
-        const leadData = await leadRes.json();
-
-        // 4. Fetch Notes/Timeline (In ERPNext, these are often in 'Communication' or 'Note' doctypes linked to the lead)
-        // For MVP, simply getting the basic fields + standard ERPNext timeline via Communication could work
-        // Let's try to fetch "Communication" linked to this Lead
-
-        const notesRes = await fetch(
-            `${apiUrl}/api/resource/Communication?filters=[["reference_name","=","${id}"]]&fields=["subject","content","communication_date","sender"]&order_by=communication_date desc`,
-            { headers, cache: 'no-store' }
-        );
-
-        let notes = [];
-        if (notesRes.ok) {
-            const notesData = await notesRes.json();
-            notes = notesData.data || [];
-        }
-
-        return NextResponse.json({
-            lead: leadData.data,
-            timeline: notes
-        });
-
+        return NextResponse.json({ lead });
     } catch (error) {
         console.error("API Lead Detail Error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+
+    try {
+        const lead = await prisma.lead.findFirst({
+            where: { OR: [{ id }, { name: id }] },
+        });
+
+        if (!lead) {
+            return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+        }
+
+        await prisma.lead.delete({ where: { id: lead.id } });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("DELETE Lead Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
