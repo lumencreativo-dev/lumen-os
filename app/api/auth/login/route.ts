@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
@@ -11,11 +11,14 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Email y contraseña requeridos" }, { status: 400 });
         }
 
-        const user = await prisma.user.findUnique({
-            where: { email },
-        });
+        const supabase = await createClient();
+        const { data: user, error } = await supabase
+            .from("User")
+            .select("*")
+            .eq("email", email)
+            .single();
 
-        if (!user) {
+        if (error || !user) {
             return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
         }
 
