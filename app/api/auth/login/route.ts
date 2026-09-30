@@ -32,7 +32,7 @@ export async function POST(request: Request) {
                 name: user.name,
                 email: user.email,
                 role: user.role.toLowerCase(),
-                avatar: user.avatar || user.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+                avatar: user.avatar || user.name.split(' ').map((n: any) => n[0]).join('').toUpperCase(),
             },
         });
     } catch (error) {

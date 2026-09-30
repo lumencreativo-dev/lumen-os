@@ -89,7 +89,7 @@ export default function PortalPage() {
     const [error, setError] = useState("");
 
     // State for interactive deliverables
-    const [deliverables, setDeliverables] = useState(generateMockDeliverables());
+    const [deliverables, setDeliverables] = useState<any[]>(generateMockDeliverables());
 
     // Modal state
     const [selectedDeliverable, setSelectedDeliverable] = useState<typeof deliverables[0] | null>(null);
@@ -319,7 +319,7 @@ export default function PortalPage() {
 
             {/* Deliverable Modal */}
             <DeliverableModal
-                item={selectedDeliverable}
+                item={selectedDeliverable as any}
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onApprove={handleApprove}

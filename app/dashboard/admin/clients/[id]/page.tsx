@@ -86,7 +86,7 @@ export default function ClientProfilePage() {
                 try {
                     // TODO: Load financials from Prisma (invoices, payments)
                     // For now, just set empty
-                    setFinancials(null);
+                    setFinancials({ invoices: [], payments: [] });
                 } catch (e) {
                     console.error("Failed to load financials", e);
                 } finally {
