@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Cormorant_Garamond, Inter, Cinzel } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -44,10 +45,12 @@ export default function RootLayout({
         inter.variable,
         cinzel.variable
       )}>
-        <MatomoTracker
-          siteId={process.env.NEXT_PUBLIC_MATOMO_SITE_ID || ""}
-          matomoUrl={process.env.NEXT_PUBLIC_MATOMO_URL || ""}
-        />
+        <Suspense fallback={null}>
+          <MatomoTracker
+            siteId={process.env.NEXT_PUBLIC_MATOMO_SITE_ID || ""}
+            matomoUrl={process.env.NEXT_PUBLIC_MATOMO_URL || ""}
+          />
+        </Suspense>
         <ToastProvider>
           {children}
         </ToastProvider>
