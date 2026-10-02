@@ -33,6 +33,7 @@ import {
     Globe,
     Calendar,
     LayoutDashboard,
+    Sparkles
 } from "lucide-react";
 import { Client, SocialCredential } from "@/types/clients";
 import Link from "next/link";
@@ -388,21 +389,26 @@ export default function ClientsAdminPage() {
                                 </div>
 
                                 {/* Actions Footer */}
-                                <div className="bg-gray-50/50 p-3 flex gap-2 border-t border-gray-100">
-                                    <Button
+                                <div className="bg-gray-50/50 p-3 grid grid-cols-2 gap-2 border-t border-gray-100 rounded-b-xl">
+                                    <button
                                         onClick={() => copyPortalLink(client.portalToken)}
-                                        variant="outline"
-                                        className="flex-1 text-xs h-9 bg-white border-gray-200 hover:bg-gray-50 hover:text-lumen-priority"
+                                        className="lumen-btn lumen-btn-ghost text-[10px] px-2 w-full h-8 flex items-center justify-center bg-white hover:bg-gray-50"
                                     >
-                                        <LinkIcon className="w-3 h-3 mr-2" />
+                                        <LinkIcon className="w-3 h-3 mr-1" />
                                         Copiar Portal
-                                    </Button>
-                                    <Link href={`/portal/${client.portalToken}`} target="_blank" className="flex-shrink-0">
-                                        <Button variant="ghost" size="icon" className="h-9 w-9 border border-gray-200 bg-white text-gray-400 hover:text-lumen-view">
-                                            <ExternalLink className="w-4 h-4" />
-                                        </Button>
-                                    </Link>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(`${window.location.origin}/onboarding/${client.portalToken}`);
+                                            alert("Link de Onboarding copiado!");
+                                        }}
+                                        className="lumen-btn lumen-btn-ghost text-[10px] px-2 w-full h-8 flex items-center justify-center bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                                    >
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        Link Onboarding
+                                    </button>
                                 </div>
+
                             </motion.div>
                         ))
                     )}
