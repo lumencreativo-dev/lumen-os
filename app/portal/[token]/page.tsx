@@ -8,9 +8,10 @@ import { DeliverableModal } from "@/components/portal/DeliverableModal";
 import { ContentCalendar } from "@/components/portal/ContentCalendar";
 import { ProjectProgress } from "@/components/portal/ProjectProgress";
 import { SupportChat } from "@/components/portal/SupportChat";
-import { LayoutGrid, Calendar as CalendarIcon, CheckCircle2, AlertCircle, TrendingUp, Sparkles } from "lucide-react";
+import { LayoutGrid, Calendar as CalendarIcon, CheckCircle2, AlertCircle, TrendingUp, Sparkles, User as UserIcon } from "lucide-react";
 import { Client } from "@/types/clients";
 import { motion } from "framer-motion";
+import { ClientBrief } from "@/components/portal/ClientBrief";
 
 // Mock Data Generators
 const generateMockDeliverables = () => [
@@ -234,7 +235,7 @@ export default function PortalPage() {
                 transition={{ duration: 0.5, delay: 0.2 }}
             >
                 <Tabs defaultValue="deliverables" className="w-full">
-                    <TabsList className="bg-gray-100/80 p-1 rounded-xl mb-6">
+                    <TabsList className="bg-gray-100/80 p-1 rounded-xl mb-6 flex overflow-x-auto">
                         <TabsTrigger value="deliverables" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
                             <LayoutGrid className="w-4 h-4 mr-2" /> Entregables
                             {pendingCount > 0 && (
@@ -249,7 +250,14 @@ export default function PortalPage() {
                         <TabsTrigger value="progress" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
                             <TrendingUp className="w-4 h-4 mr-2" /> Progreso
                         </TabsTrigger>
+                        <TabsTrigger value="brief" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
+                            <UserIcon className="w-4 h-4 mr-2" /> Perfil & Brief
+                        </TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="brief" className="mt-0">
+                        {client && <ClientBrief client={client} />}
+                    </TabsContent>
 
                     <TabsContent value="deliverables" className="mt-0">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

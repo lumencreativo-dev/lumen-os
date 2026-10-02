@@ -2,19 +2,19 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, CheckCircle, Sparkles, Building2, Target, Users, CalendarDays, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle, Sparkles, Building2, User, Loader2 } from "lucide-react";
 
 interface OnboardingWizardProps {
     initialClient: any;
-    initialIdentity: any;
+    initialIdentity: any; // We might not need this here anymore, but keeping for compatibility
 }
 
-export default function OnboardingWizard({ initialClient, initialIdentity }: OnboardingWizardProps) {
+export default function OnboardingWizard({ initialClient }: OnboardingWizardProps) {
     const [step, setStep] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
-    // Form states
+    // Form states - Only basic info for the initial onboarding
     const [clientData, setClientData] = useState({
         industry: initialClient.industry || "",
         website: initialClient.website || "",
@@ -22,43 +22,23 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
         contactPhone: initialClient.contactPhone || "",
     });
 
-    const [identityData, setIdentityData] = useState({
-        purpose: initialIdentity?.purpose || "",
-        toneOfVoice: initialIdentity?.toneOfVoice || "",
-        archetype: initialIdentity?.archetype || "",
-        targetAudience: initialIdentity?.targetAudience || "",
-        competitors: initialIdentity?.competitors || "",
-    });
-
     const steps = [
         {
             id: "welcome",
             title: "Bienvenido a Lumen",
-            subtitle: `Es hora de construir el ADN de ${initialClient.name}.`,
+            subtitle: `Hola ${initialClient.name}, estamos listos para empezar.`,
             icon: Sparkles
         },
         {
             id: "basic",
-            title: "Información General",
-            subtitle: "Datos básicos para mantenernos en contacto.",
-            icon: Building2
-        },
-        {
-            id: "essence",
-            title: "Esencia de Marca",
-            subtitle: "El alma detrás de lo que haces.",
-            icon: Target
-        },
-        {
-            id: "audience",
-            title: "Audiencia y Competencia",
-            subtitle: "¿A quién le hablamos y con quién competimos?",
-            icon: Users
+            title: "Datos de Contacto",
+            subtitle: "Confirmemos tu información básica para iniciar.",
+            icon: User
         },
         {
             id: "finish",
             title: "¡Todo Listo!",
-            subtitle: "Tu espacio está configurado y sincronizado.",
+            subtitle: "Tu portal de cliente está preparado.",
             icon: CheckCircle
         }
     ];
@@ -71,17 +51,20 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
                 const res = await fetch(`/api/onboarding/${initialClient.portalToken}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clientData, identityData })
+                    // We send empty identityData so the API doesn't fail if it expects it
+                    body: JSON.stringify({ clientData, identityData: {} })
                 });
                 
                 if (res.ok) {
                     setStep(step + 1);
                     setSaved(true);
                 } else {
-                    alert("Hubo un error al guardar. Intenta de nuevo.");
+                    const data = await res.json();
+                    alert(`Hubo un error al guardar: ${data.error || 'Intenta de nuevo.'}`);
                 }
             } catch (error) {
                 console.error(error);
+                alert("Hubo un error de conexión.");
             } finally {
                 setIsSaving(false);
             }
@@ -97,15 +80,15 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
             case 0:
                 return (
                     <div className="text-center py-12">
-                        <div className="w-24 h-24 bg-lumen-priority/10 rounded-full flex items-center justify-center mx-auto mb-8 relative">
-                            <div className="absolute inset-0 bg-lumen-priority/20 rounded-full animate-ping opacity-20" />
+                        <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-8 relative">
+                            <div className="absolute inset-0 bg-orange-100 rounded-full animate-ping opacity-50" />
                             <Sparkles className="w-12 h-12 text-lumen-priority relative z-10" />
                         </div>
                         <h2 className="lumen-title text-5xl font-black text-gray-900 mb-6 leading-tight">
-                            Smart <br/>Onboarding
+                            Comencemos.
                         </h2>
                         <p className="text-lg text-gray-500 max-w-lg mx-auto leading-relaxed">
-                            Vamos a configurar tu perfil, entender tu esencia de marca y alinear los objetivos para que nuestro sistema de IA genere el mejor contenido para ti.
+                            Te damos la bienvenida a tu nuevo espacio de trabajo. En solo 2 simples pasos configuraremos tu acceso a Lumen OS para que puedas gestionar tus proyectos y contenidos.
                         </p>
                     </div>
                 );
@@ -119,7 +102,7 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
                                 placeholder="Ej: Restaurante, Inmobiliaria..."
                                 value={clientData.industry}
                                 onChange={(e) => setClientData({ ...clientData, industry: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm bg-gray-50/50"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -129,28 +112,28 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
                                 placeholder="www.tuempresa.com"
                                 value={clientData.website}
                                 onChange={(e) => setClientData({ ...clientData, website: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm bg-gray-50/50"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Contacto Principal</label>
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre del Encargado</label>
                                 <input
                                     type="text"
                                     placeholder="Nombre"
                                     value={clientData.contactName}
                                     onChange={(e) => setClientData({ ...clientData, contactName: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm bg-gray-50/50"
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">WhatsApp</label>
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">WhatsApp Principal</label>
                                 <input
                                     type="tel"
                                     placeholder="+123456789"
                                     value={clientData.contactPhone}
                                     onChange={(e) => setClientData({ ...clientData, contactPhone: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm bg-gray-50/50"
                                 />
                             </div>
                         </div>
@@ -158,80 +141,23 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
                 );
             case 2:
                 return (
-                    <div className="space-y-6">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Propósito Superior</label>
-                            <p className="text-xs text-gray-400 mb-2">¿Por qué existe tu marca más allá de hacer dinero?</p>
-                            <textarea
-                                value={identityData.purpose}
-                                onChange={(e) => setIdentityData({ ...identityData, purpose: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm"
-                                placeholder="Ej: Queremos democratizar el acceso a la tecnología..."
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tono de Voz</label>
-                            <textarea
-                                value={identityData.toneOfVoice}
-                                onChange={(e) => setIdentityData({ ...identityData, toneOfVoice: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm"
-                                placeholder="Ej: Cercano, profesional pero no aburrido, inspirador..."
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Arquetipo de Marca</label>
-                            <input
-                                type="text"
-                                value={identityData.archetype}
-                                onChange={(e) => setIdentityData({ ...identityData, archetype: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm"
-                                placeholder="Ej: El Mago, El Sabio, El Rebelde..."
-                            />
-                        </div>
-                    </div>
-                );
-            case 3:
-                return (
-                    <div className="space-y-6">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Público Objetivo (Buyer Persona)</label>
-                            <p className="text-xs text-gray-400 mb-2">Describe a tu cliente ideal, sus dolores y deseos.</p>
-                            <textarea
-                                value={identityData.targetAudience}
-                                onChange={(e) => setIdentityData({ ...identityData, targetAudience: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[120px] resize-none shadow-sm"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Competencia Directa e Indirecta</label>
-                            <textarea
-                                value={identityData.competitors}
-                                onChange={(e) => setIdentityData({ ...identityData, competitors: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm"
-                                placeholder="Ej: Marca A (fuerte en diseño), Marca B (buenos precios)..."
-                            />
-                        </div>
-                    </div>
-                );
-            case 4:
-                return (
                     <div className="text-center py-16">
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", bounce: 0.5 }}
-                            className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8"
+                            className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-8"
                         >
-                            <CheckCircle className="w-12 h-12 text-green-600" />
+                            <CheckCircle className="w-12 h-12 text-green-500" />
                         </motion.div>
                         <h2 className="lumen-title text-4xl font-black text-gray-900 mb-4">
                             ¡Misión Cumplida!
                         </h2>
                         <p className="text-gray-500 max-w-md mx-auto mb-8">
-                            Toda tu información ha sido guardada y nuestro Laboratorio de IA ya está procesando tu ADN para generar contenido increíble.
+                            Tus datos básicos están confirmados. Ahora pasaremos a tu Portal de Cliente, donde podrás darnos más detalles sobre tu marca.
                         </p>
-                        <a href={`/portal/${initialClient.portalToken}`} className="lumen-btn lumen-btn-primary">
-                            Ir a mi Portal de Cliente
+                        <a href={`/portal/${initialClient.portalToken}`} className="lumen-btn lumen-btn-primary px-8">
+                            Ir a mi Portal
                         </a>
                     </div>
                 );
@@ -241,63 +167,45 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
     };
 
     return (
-        <div className="min-h-screen bg-[#080808] flex items-center justify-center p-4 md:p-8 font-sans">
-            <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+        <div className="min-h-screen bg-gray-50/50 flex items-center justify-center p-4 md:p-8 font-sans relative overflow-hidden">
+            {/* Soft background elements */}
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-orange-100/40 to-transparent pointer-events-none" />
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-lumen-priority/10 blur-[100px] rounded-full pointer-events-none" />
+            
+            <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden flex flex-col min-h-[550px] relative z-10">
                 
-                {/* Left Sidebar (Progress) */}
-                <div className="w-full md:w-64 bg-gray-50 border-r border-gray-100 p-8 hidden md:flex flex-col relative overflow-hidden">
-                    {/* Brand top */}
-                    <div className="mb-12 relative z-10">
-                        <span className="font-black text-xl tracking-tight text-gray-900">
-                            LUMEN<span className="text-lumen-priority">·</span>OS
-                        </span>
+                {/* Header Progress */}
+                <div className="px-8 py-6 border-b border-gray-100 bg-white/80 backdrop-blur-sm flex justify-between items-center sticky top-0 z-20">
+                    <span className="font-black text-xl tracking-tight text-gray-900">
+                        LUMEN<span className="text-lumen-priority">·</span>OS
+                    </span>
+                    <div className="flex gap-2">
+                        {steps.map((s, idx) => (
+                            <div 
+                                key={s.id} 
+                                className={`h-2 rounded-full transition-all duration-500 ${
+                                    step >= idx ? 'w-8 bg-lumen-priority' : 'w-4 bg-gray-100'
+                                }`} 
+                            />
+                        ))}
                     </div>
-
-                    <div className="space-y-8 relative z-10">
-                        {steps.map((s, idx) => {
-                            const isActive = step === idx;
-                            const isPast = step > idx;
-                            return (
-                                <div key={s.id} className="flex gap-4 relative">
-                                    {idx !== steps.length - 1 && (
-                                        <div className={`absolute top-8 left-3 w-px h-8 ${isPast ? 'bg-lumen-priority' : 'bg-gray-200'}`} />
-                                    )}
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 ${isActive ? 'bg-lumen-priority text-white shadow-md shadow-lumen-priority/30' : isPast ? 'bg-lumen-priority text-white' : 'bg-white border-2 border-gray-200 text-gray-400'}`}>
-                                        {isPast ? <CheckCircle className="w-3.5 h-3.5" /> : <span className="text-[10px] font-bold">{idx + 1}</span>}
-                                    </div>
-                                    <div>
-                                        <p className={`text-sm font-bold transition-colors ${isActive ? 'text-gray-900' : isPast ? 'text-gray-700' : 'text-gray-400'}`}>{s.title}</p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    
-                    {/* Decorative gradient */}
-                    <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-gray-200/50 to-transparent pointer-events-none" />
                 </div>
 
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col relative bg-white">
-                    {/* Header mobile */}
-                    <div className="md:hidden p-6 border-b border-gray-100 flex justify-between items-center">
-                        <span className="font-black text-lg text-gray-900">LUMEN<span className="text-lumen-priority">·</span>OS</span>
-                        <span className="text-xs font-bold text-gray-400">Paso {step + 1} de {steps.length}</span>
-                    </div>
-
                     <div className="flex-1 p-8 md:p-12 flex flex-col justify-center relative overflow-hidden">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={step}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -15 }}
                                 transition={{ duration: 0.3, ease: "easeOut" }}
-                                className="w-full"
+                                className="w-full max-w-xl mx-auto"
                             >
                                 {step > 0 && step < steps.length - 1 && (
-                                    <div className="mb-8">
-                                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-lumen-priority/10 text-lumen-priority mb-4">
+                                    <div className="mb-10 text-center">
+                                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-orange-50 text-lumen-priority mb-4">
                                             {steps[step].icon && (() => { const Icon = steps[step].icon; return <Icon className="w-6 h-6" /> })()}
                                         </div>
                                         <h2 className="lumen-title text-3xl font-black text-gray-900 mb-2">{steps[step].title}</h2>
@@ -311,10 +219,10 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
 
                     {/* Footer Controls */}
                     {step < steps.length - 1 && (
-                        <div className="p-6 md:px-12 md:py-8 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div className="p-6 md:px-12 md:py-6 border-t border-gray-50 flex justify-between items-center bg-gray-50/50">
                             {step > 0 ? (
-                                <button onClick={handleBack} className="lumen-btn lumen-btn-ghost text-gray-500 hover:text-gray-900">
-                                    <ArrowLeft className="w-4 h-4" />
+                                <button onClick={handleBack} className="lumen-btn lumen-btn-ghost text-gray-500 hover:text-gray-900 px-4">
+                                    <ArrowLeft className="w-4 h-4 mr-2" />
                                     Atrás
                                 </button>
                             ) : <div></div>}
@@ -322,14 +230,14 @@ export default function OnboardingWizard({ initialClient, initialIdentity }: Onb
                             <button
                                 onClick={handleNext}
                                 disabled={isSaving}
-                                className="lumen-btn lumen-btn-primary"
+                                className="lumen-btn lumen-btn-primary px-8 shadow-md shadow-lumen-priority/20"
                             >
                                 {isSaving ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : step === steps.length - 2 ? (
-                                    "Finalizar y Guardar"
+                                    "Comenzar"
                                 ) : (
-                                    <>Siguiente <ArrowRight className="w-4 h-4" /></>
+                                    <>Siguiente <ArrowRight className="w-4 h-4 ml-2" /></>
                                 )}
                             </button>
                         </div>

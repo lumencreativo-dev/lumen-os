@@ -47,11 +47,11 @@ export async function POST(request: Request, props: { params: Promise<{ token: s
             .single();
 
         const identityPayload = {
-            purpose: identityData.purpose,
-            toneOfVoice: identityData.toneOfVoice,
-            archetype: identityData.archetype,
-            targetAudience: identityData.targetAudience,
-            competitors: identityData.competitors,
+            purpose: identityData?.purpose || "",
+            toneOfVoice: identityData?.toneOfVoice || "",
+            archetype: identityData?.archetype || "",
+            targetAudience: identityData?.targetAudience || "",
+            competitors: identityData?.competitors || "",
             updatedAt: new Date().toISOString()
         };
 
