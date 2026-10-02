@@ -163,7 +163,7 @@ export default function ClientProfilePage() {
                             ERPNext
                         </Button>
                     )}
-                    <Button variant="outline" onClick={() => window.open(`/portal/${client.token}`, '_blank')}>
+                    <Button variant="outline" onClick={() => window.open(`/portal/${client.portalToken}`, '_blank')}>
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Ver Portal
                     </Button>

@@ -2,7 +2,7 @@
 
 import { Client } from "@/types/clients";
 
-// Client Service - fetches from API which connects to ERPNext
+// Client Service - fetches from Supabase via API
 export const clientService = {
     getAll: async (): Promise<Client[]> => {
         try {
@@ -27,9 +27,9 @@ export const clientService = {
         return all.find(c => c.erpId === erpId);
     },
 
-    getByToken: async (token: string): Promise<Client | undefined> => {
+    getByPortalToken: async (token: string): Promise<Client | undefined> => {
         const all = await clientService.getAll();
-        return all.find(c => c.token === token);
+        return all.find(c => c.portalToken === token);
     },
 
     create: async (clientData: Partial<Client>): Promise<Client | null> => {

@@ -84,8 +84,8 @@ export default function PortalPage() {
                     setClient({
                         id: 'demo',
                         name: 'Cliente Demo',
-                        token: 'demo',
-                        erpId: 'DEMO-001'
+                        portalToken: 'demo',
+                        
                     });
                     setLoading(false);
                     return;
@@ -95,7 +95,7 @@ export default function PortalPage() {
                 const res = await fetch('/api/clients');
                 if (res.ok) {
                     const data = await res.json();
-                    const found = data.clients?.find((c: Client) => c.portalToken === token || c.token === token);
+                    const found = data.clients?.find((c: Client) => c.portalToken === token);
 
                     if (found) {
                         setClient(found);
@@ -104,8 +104,8 @@ export default function PortalPage() {
                         setClient({
                             id: 'demo',
                             name: 'Cliente Demo',
-                            token: token,
-                            erpId: 'DEMO-001'
+                            portalToken: token,
+                            
                         });
                     }
                 } else {
@@ -113,8 +113,8 @@ export default function PortalPage() {
                     setClient({
                         id: 'demo',
                         name: 'Cliente Demo',
-                        token: token,
-                        erpId: 'DEMO-001'
+                        portalToken: token,
+                        
                     });
                 }
             } catch (err) {
@@ -122,8 +122,8 @@ export default function PortalPage() {
                 setClient({
                     id: 'demo',
                     name: 'Cliente Demo',
-                    token: token,
-                    erpId: 'DEMO-001'
+                    portalToken: token,
+                    
                 });
             } finally {
                 setLoading(false);
@@ -301,3 +301,4 @@ export default function PortalPage() {
         </div>
     );
 }
+

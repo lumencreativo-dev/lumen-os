@@ -40,7 +40,17 @@ export async function POST(request: Request) {
             email,
             contactPhone: contactPhone || body.phone,
             contactName: contactName || body.contactPerson,
-            portalToken
+            portalToken,
+            instagram: body.instagram,
+            industry: body.industry,
+            whatsapp: body.whatsapp,
+            paymentDay: body.paymentDay,
+            address: body.address,
+            taxId: body.taxId,
+            website: body.website,
+            notes: body.notes,
+            brandColor: body.brandColor,
+            logoUrl: body.logoUrl
         }).select().single();
 
         if (error) {
@@ -70,7 +80,7 @@ export async function PUT(request: Request) {
         }
 
         // Remove properties that don't belong to the Client table in Supabase
-        const { socialCredentials, phone, contactPerson, industry, whatsapp, address, taxId, paymentDay, notes, status, token, portalToken, instagram, website, ...clientUpdates } = updates as any;
+        const { socialCredentials, phone, contactPerson, status, token, portalToken, ...clientUpdates } = updates as any;
 
         if (phone) clientUpdates.contactPhone = phone;
         if (contactPerson) clientUpdates.contactName = contactPerson;

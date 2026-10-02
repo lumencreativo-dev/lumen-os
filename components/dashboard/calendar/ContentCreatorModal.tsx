@@ -73,7 +73,7 @@ export default function ContentCreatorModal({
                                         onClick={() => setFormData({ ...formData, type })}
                                         className={`p-2 rounded-lg border text-sm flex items-center justify-center gap-2 transition-all
                                             ${formData.type === type
-                                                ? 'bg-white border-lumen-priority text-lumen-priority shadow-sm ring-1 ring-lumen-priority/20'
+                                                ? 'bg-lumen-priority border-lumen-priority text-white shadow-sm font-bold'
                                                 : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-100'}`}
                                     >
                                         {type === 'reel' ? <Video className="w-4 h-4" /> :
@@ -229,7 +229,7 @@ export default function ContentCreatorModal({
                         <div className="flex gap-3">
                             <Button variant="outline" onClick={onClose}>Cancelar</Button>
                             <Button
-                                className="bg-lumen-priority text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20 px-8"
+                                className="bg-lumen-priority text-white hover:bg-orange-500 shadow-lg shadow-orange-400/30 px-8 font-bold"
                                 onClick={() => onSave(formData)}
                             >
                                 <Save className="w-4 h-4 mr-2" />

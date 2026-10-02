@@ -40,7 +40,7 @@ const ACTIVE_MENU_ITEMS: MenuItem[] = [
     { name: 'Hub de Clientes', icon: Briefcase, href: '/dashboard/hub' },
     { name: 'Aprobaciones', icon: CheckCircle, href: '/dashboard/deliverables' },
     { name: 'Calendario', icon: Calendar, href: '/dashboard/calendar' },
-    { name: 'Soporte', icon: MessageCircle, href: '/dashboard/support', roles: ['admin', 'sales', 'strategist'] },
+    // { name: 'Soporte', icon: MessageCircle, href: '/dashboard/support', roles: ['admin', 'sales', 'strategist'] }, // TODO: Conectar API WhatsApp Fase 8
     { name: 'Admin', icon: Settings, href: '/dashboard/admin', roles: ['admin'] },
 ];
 
@@ -103,7 +103,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                             href={item.href}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all ${isActive
-                                ? "bg-lumen-priority/10 text-lumen-priority shadow-none"
+                                ? "bg-lumen-priority/10 text-lumen-priority font-semibold border-l-2 border-lumen-priority pl-[14px]"
                                 : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                 }`}
                         >

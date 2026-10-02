@@ -7,19 +7,21 @@ import {
     Search,
     Plus,
     ChevronRight,
-    Globe,
-    Instagram,
     Mail,
     Sparkles
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { motion } from "framer-motion";
 
 interface ClientRow {
     id: string;
     name: string;
     logo: string | null;
+    logoUrl: string | null;
     email: string | null;
     portalToken: string;
+    brandColor: string | null;
+    industry: string | null;
     createdAt: string;
 }
 
@@ -31,9 +33,9 @@ export default function HubPage() {
     useEffect(() => {
         async function fetchClients() {
             const supabase = createClient();
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from("Client")
-                .select("id, name, logo, email, portalToken, createdAt")
+                .select("id, name, logo, logoUrl, email, portalToken, brandColor, industry, createdAt")
                 .order("name", { ascending: true });
 
             if (data) setClients(data);
@@ -51,10 +53,7 @@ export default function HubPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Briefcase className="w-6 h-6 text-lumen-priority" />
-                        Hub de Clientes
-                    </h1>
+                    <h1 className="text-4xl font-black text-gray-900 tracking-tight">Hub de Clientes</h1>
                     <p className="text-sm text-gray-500 mt-1">
                         Centro de operaciones por cliente. Identidad, fechas y prompts.
                     </p>
@@ -75,8 +74,10 @@ export default function HubPage() {
 
             {/* Loading */}
             {loading && (
-                <div className="flex items-center justify-center py-20">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lumen-priority"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1,2,3].map(i => (
+                        <div key={i} className="h-40 bg-gray-100 rounded-2xl animate-pulse" />
+                    ))}
                 </div>
             )}
 
@@ -100,48 +101,87 @@ export default function HubPage() {
 
             {/* Client Grid */}
             {!loading && filtered.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filtered.map((client) => (
-                        <Link
-                            key={client.id}
-                            href={`/dashboard/hub/${client.id}`}
-                            className="group bg-white border border-gray-200 rounded-2xl p-5 hover:border-lumen-priority/30 hover:shadow-lg transition-all"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    {client.logo ? (
-                                        <img
-                                            src={client.logo}
-                                            alt={client.name}
-                                            className="w-10 h-10 rounded-xl object-cover"
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {filtered.map((client, i) => {
+                        const color = client.brandColor || '#64748b';
+                        const logoSrc = client.logoUrl || client.logo;
+                        
+                        return (
+                            <motion.div
+                                key={client.id}
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.06 }}
+                            >
+                                <Link
+                                    href={`/dashboard/hub/${client.id}`}
+                                    className="group block bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300"
+                                    style={{ boxShadow: `0 2px 12px ${color}15` }}
+                                >
+                                    {/* Brand Banner */}
+                                    <div
+                                        className="h-20 w-full relative flex items-end p-4"
+                                        style={{ background: `linear-gradient(135deg, ${color}dd, ${color}88)` }}
+                                    >
+                                        <div className="absolute inset-0 opacity-10"
+                                            style={{ backgroundImage: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }}
                                         />
-                                    ) : (
-                                        <div className="w-10 h-10 rounded-xl bg-lumen-priority/10 flex items-center justify-center text-lumen-priority font-bold text-sm">
-                                            {client.name.substring(0, 2).toUpperCase()}
+                                        {/* Logo / Avatar */}
+                                        <div className="absolute -bottom-5 left-4">
+                                            {logoSrc ? (
+                                                <img
+                                                    src={logoSrc}
+                                                    alt={client.name}
+                                                    className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-md"
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black text-white border-2 border-white shadow-md"
+                                                    style={{ backgroundColor: color }}
+                                                >
+                                                    {client.name.charAt(0)}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 group-hover:text-lumen-priority transition-colors">
+                                        {/* Arrow indicator */}
+                                        <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="pt-8 px-5 pb-5">
+                                        <h3 className="font-bold text-gray-900 text-base group-hover:text-gray-700 transition-colors leading-tight">
                                             {client.name}
                                         </h3>
-                                        {client.email && (
-                                            <p className="text-xs text-gray-400 flex items-center gap-1">
+                                        {client.industry && (
+                                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                                                <Briefcase className="w-3 h-3" />
+                                                {client.industry}
+                                            </p>
+                                        )}
+                                        {client.email && !client.industry && (
+                                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                                                 <Mail className="w-3 h-3" />
                                                 {client.email}
                                             </p>
                                         )}
-                                    </div>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-lumen-priority transition-colors" />
-                            </div>
 
-                            <div className="flex items-center gap-2 text-xs text-gray-400">
-                                <span className="bg-gray-100 px-2 py-1 rounded-lg">
-                                    Identidad · Fechas · Prompts
-                                </span>
-                            </div>
-                        </Link>
-                    ))}
+                                        {/* Tags */}
+                                        <div className="flex items-center gap-1.5 mt-3">
+                                            {['Identidad', 'Fechas', 'Prompts'].map(tag => (
+                                                <span
+                                                    key={tag}
+                                                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                                    style={{ backgroundColor: `${color}18`, color: color }}
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </Link>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             )}
 

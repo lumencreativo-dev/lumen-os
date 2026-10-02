@@ -7,15 +7,15 @@ export interface SocialCredential {
 export interface Client {
     id: string;      // Internal ID (e.g., 'hsa')
     name: string;    // Full Name
-    erpId: string;   // ERPNext ID reference
-    token: string;   // Secret access token for URL
-    logo?: string;   // Optional logo URL
+    erpId?: string;   // ERPNext ID reference
+    portalToken: string;   // Secret access token for URL
+    logo?: string; logoUrl?: string; brandColor?: string;   // Optional logo URL
     instagram?: string;    // Instagram handle (sin @)
     industry?: string;     // Rubro/Industria
     contactPhone?: string; // Teléfono de contacto
     whatsapp?: string;     // WhatsApp (puede ser diferente al teléfono)
     paymentDay?: string;   // Día de pago mensual
-    contactPerson?: string; // Nombre del encargado
+    contactName?: string; // Nombre del encargado
     email?: string; // Email de contacto
     address?: string; // Dirección
     taxId?: string; // RUT/NIT

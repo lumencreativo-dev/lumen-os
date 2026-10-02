@@ -8,7 +8,7 @@ import {
     ArrowLeft, Fingerprint, BookOpen, Calendar, MessageSquare, Save,
     Plus, Trash2, AlertCircle, Phone, X, Check, Hash, Palette, Type,
     Target, UserCircle, ChevronDown, ChevronUp, Edit3, LayoutList,
-    Kanban, Grid, Clock
+    Kanban, Grid, Clock, Sparkles, Copy
 } from "lucide-react";
 
 // ==================== TOAST NOTIFICATION ====================
@@ -796,131 +796,356 @@ export default function ClientHubPage() {
                 </div>
             )}
 
-            {/* TAB: PROMPTS */}
+            {/* TAB: PROMPTS — Laboratorio de IA */}
             {activeTab === "prompts" && (
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-1">Banco de Prompts Dinámicos</h2>
-                            <p className="text-gray-500 text-sm">Copiar y pegar en ChatGPT o Claude. Los prompts ya contienen el ADN de {client?.name}.</p>
-                        </div>
-                        <div className="w-12 h-12 bg-lumen-priority/10 rounded-xl flex items-center justify-center">
-                            <MessageSquare className="w-6 h-6 text-lumen-priority" />
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Header */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="p-6 flex items-center gap-4" style={{ background: `linear-gradient(135deg, ${client?.brandColor || '#F7931E'}15, transparent)` }}>
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner flex-shrink-0" style={{ backgroundColor: client?.brandColor || '#F7931E' }}>
+                                <Sparkles className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-gray-900">Laboratorio de IA ✦</h2>
+                                <p className="text-sm text-gray-500 mt-0.5">Prompts maestros ya cargados con el ADN de <strong>{client?.name}</strong>. Copia y pega directo en Claude o ChatGPT.</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Prompt Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {[
                             {
-                                title: "Generador de Ideas (Lluvia de ideas)",
-                                description: "Crea 5 ideas de contenido alineadas con los pilares y audiencia.",
-                                generate: () => `Actúa como un estratega de contenido experto. Necesito 5 ideas de contenido para mi marca.
-Contexto de la marca:
+                                category: "Diagnóstico",
+                                emoji: "🔍",
+                                color: "#7C3AED",
+                                title: "Diagnóstico de Marca",
+                                description: "Auditoría completa del posicionamiento actual de la marca.",
+                                generate: () => `Actúa como un consultor senior de branding. Voy a darte información sobre mi marca y necesito un diagnóstico profundo.
+
+DATOS DE LA MARCA:
+- Nombre: ${client?.name || "No definido"}
+- Industria: ${client?.industry || "No definida"}
+- Propósito: ${identity?.purpose || "No definido"}
+- Tono de voz: ${identity?.toneOfVoice || "No definido"}
+- Arquetipo de marca: ${identity?.archetype || "No definido"}
+
+Por favor entrega:
+1. Diagnóstico del posicionamiento actual (fortalezas y brechas)
+2. Análisis de coherencia entre propósito, tono y arquetipo
+3. 3 recomendaciones estratégicas concretas y accionables
+4. Una pregunta clave que la marca debería responder urgentemente`
+                            },
+                            {
+                                category: "Diagnóstico",
+                                emoji: "⚔️",
+                                color: "#DC2626",
+                                title: "Análisis FODA de Marca",
+                                description: "Identifica fortalezas, oportunidades, debilidades y amenazas.",
+                                generate: () => `Eres un estratega de marketing. Necesito un FODA (SWOT) completo para mi marca.
+
+CONTEXTO:
+- Marca: ${client?.name || "No definido"}
+- Industria: ${client?.industry || "No definida"}
+- Audiencia objetivo: ${identity?.targetAudience || "No definida"}
+- Referentes/Competencia: ${identity?.competitors || "No definidos"}
+- Propósito: ${identity?.purpose || "No definido"}
+
+Entrega el FODA en formato de tabla clara con al menos 3 puntos por cuadrante. Luego sugiere la estrategia FO (usar fortalezas para aprovechar oportunidades) más poderosa.`
+                            },
+                            {
+                                category: "Audiencia",
+                                emoji: "👤",
+                                color: "#2563EB",
+                                title: "Buyer Persona Detallada",
+                                description: "Construye el perfil psicográfico y demográfico del cliente ideal.",
+                                generate: () => `Actúa como un experto en investigación de mercado. Crea una Buyer Persona completa y detallada.
+
+DATOS:
+- Marca/Empresa: ${client?.name || "No definido"}
+- Audiencia descrita: ${identity?.targetAudience || "No definida"}
+- Industria: ${client?.industry || "No definida"}
+- Pilares de contenido: ${parseJSON(identity?.contentPillars).join(', ') || "No definidos"}
+
+La Buyer Persona debe incluir:
+1. Nombre ficticio y perfil demográfico (edad, ubicación, profesión, ingreso)
+2. Perfil psicográfico (valores, miedos, frustraciones, sueños)
+3. Comportamiento digital (redes favoritas, horas de conexión, tipo de contenido que consume)
+4. Objeciones comunes antes de comprar
+5. Frase que diría en su cabeza cuando encuentra esta marca`
+                            },
+                            {
+                                category: "Audiencia",
+                                emoji: "🧬",
+                                color: "#059669",
+                                title: "Arquetipos de Marca",
+                                description: "Define el arquetipo dominante y cómo expresarlo en contenido.",
+                                generate: () => `Eres un experto en branding jungiano y arquetipos de marca. Analiza esta marca:
+
+- Nombre: ${client?.name || "No definido"}
+- Propósito: ${identity?.purpose || "No definido"}
+- Tono de voz: ${identity?.toneOfVoice || "No definido"}
+- Arquetipo actual declarado: ${identity?.archetype || "No definido"}
+
+Necesito:
+1. Confirmación o corrección del arquetipo (con justificación)
+2. Los 3 valores centrales que definen este arquetipo en esta marca específica
+3. Cómo se expresa este arquetipo en: palabras que SÍ usar, palabras que NO usar, estética visual, y tipo de storytelling
+4. Un ejemplo real de otra marca con el mismo arquetipo y qué podemos aprender`
+                            },
+                            {
+                                category: "Contenido",
+                                emoji: "💡",
+                                color: "#D97706",
+                                title: "Lluvia de Ideas de Contenido",
+                                description: "5 ideas de contenido alineadas con los pilares de la marca.",
+                                generate: () => `Actúa como estratega de contenido. Genera 5 ideas de contenido para redes sociales.
+
+CONTEXTO DE LA MARCA:
 - Propósito: ${identity?.purpose || "No definido"}
 - Tono de voz: ${identity?.toneOfVoice || "No definido"}
 - Arquetipo: ${identity?.archetype || "No definido"}
 - Audiencia: ${identity?.targetAudience || "No definida"}
 - Pilares de contenido: ${parseJSON(identity?.contentPillars).join(', ') || "No definidos"}
+- Hashtags prohibidos: ${parseJSON(identity?.bannedHashtags).join(', ') || "Ninguno"}
 
-Por favor, asegúrate de que las ideas no usen estos hashtags: ${parseJSON(identity?.bannedHashtags).join(', ') || "Ninguno"}.
-Dámelo en formato de tabla con las columnas: Tema, Formato sugerido, y Gancho (Hook).`
+Entrega en formato tabla con columnas: Tema | Formato | Gancho (Hook) | Pilar que activa
+Incluye al menos 1 idea tipo educativo, 1 inspiracional, 1 de entretenimiento.`
                             },
                             {
-                                title: "Redactor de Post (Instagram/LinkedIn)",
-                                description: "Escribe el copy de un post basado en el tono de voz de la marca.",
-                                generate: () => `Actúa como un copywriter profesional. Escribe un caption (texto) para un post de redes sociales.
-El tono de voz DEBE ser: ${identity?.toneOfVoice || "No definido"}.
-Arquetipo de marca: ${identity?.archetype || "No definido"}.
-Incluye al final estos hashtags fijos: ${parseJSON(identity?.fixedHashtags).join(' ') || "No definidos"}.
+                                category: "Contenido",
+                                emoji: "✍️",
+                                color: "#DB2777",
+                                title: "Redactor de Post",
+                                description: "Caption listo para publicar con el tono exacto de la marca.",
+                                generate: () => `Actúa como copywriter profesional. Escribe un caption para redes sociales.
 
-Restricciones importantes de la marca:
-${identity?.constraints || "Ninguna restricción específica."}
+RESTRICCIONES DE VOZ:
+- Tono de voz: ${identity?.toneOfVoice || "No definido"}
+- Arquetipo: ${identity?.archetype || "No definido"}
+- Hashtags fijos al final: ${parseJSON(identity?.fixedHashtags).join(' ') || "No definidos"}
+- Restricciones universales: ${identity?.constraints || "Ninguna"}
 
-Criterios de estilo aprendidos:
-${preferences.map(p => `- ${p.rule} (${p.category})`).join('\n')}
+CRITERIOS APRENDIDOS:
+${preferences.map(p => `- ${p.rule} (${p.category})`).join('\n') || "Sin criterios registrados aún."}
 
-Tema del post: [ESCRIBE AQUÍ DE QUÉ TRATA EL POST]`
+Tema del post: [ESCRIBE AQUÍ EL TEMA]
+
+Escribe 3 versiones (corta, media y larga) para que yo elija la mejor.`
                             },
                             {
-                                title: "Guion para Video Corto (Reel/TikTok)",
-                                description: "Estructura un guion corto de 30-60 segundos con gancho, retención y CTA.",
-                                generate: () => `Escribe un guion para un video corto (Reel/TikTok) de máximo 60 segundos.
-Audiencia objetivo: ${identity?.targetAudience || "No definida"}.
-Tono: ${identity?.toneOfVoice || "No definido"}.
+                                category: "Video",
+                                emoji: "🎬",
+                                color: "#7C3AED",
+                                title: "Guion para Reel / TikTok",
+                                description: "Estructura completa: gancho, retención y CTA para video corto.",
+                                generate: () => `Escribe un guion para video corto (Reel/TikTok) de máximo 60 segundos.
 
-Criterios de video de la marca:
-${preferences.filter(p => p.category === 'VIDEO').map(p => `- ${p.rule}`).join('\n') || "Ninguno específico."}
+MARCA: ${client?.name || "No definido"}
+Audiencia: ${identity?.targetAudience || "No definida"}
+Tono: ${identity?.toneOfVoice || "No definido"}
 
-Estructura requerida:
-1. Gancho (primeros 3 segundos) - ¡Debe ser impactante!
-2. Cuerpo/Valor (30-40 segundos)
-3. CTA / Llamado a la acción (alineado a los objetivos de la marca)
+CRITERIOS DE VIDEO APRENDIDOS:
+${preferences.filter(p => p.category === 'VIDEO').map(p => `- ${p.rule}`).join('\n') || "Sin criterios de video aún."}
 
-Tema del video: [ESCRIBE AQUÍ EL TEMA DEL VIDEO]`
-                            }
+Estructura OBLIGATORIA:
+1. 🪝 GANCHO (0-3 seg): Frase o imagen que para el scroll
+2. 📖 CUERPO (4-45 seg): Valor, historia o demostración
+3. 📣 CTA (45-60 seg): Llamado a la acción claro y específico
+
+Tema del video: [ESCRIBE AQUÍ EL TEMA]`
+                            },
+                            {
+                                category: "Video",
+                                emoji: "📋",
+                                color: "#0891B2",
+                                title: "Storyboard Visual",
+                                description: "Describe escena a escena el contenido visual de un video.",
+                                generate: () => `Eres un director creativo. Crea un storyboard textual para un video de marca.
+
+IDENTIDAD VISUAL:
+- Colores de marca: ${parseJSON(identity?.brandColors).join(', ') || "No definidos"}
+- Tipografías: ${identity?.typography || "No definidas"}
+- Tono visual esperado: ${identity?.toneOfVoice || "No definido"}
+- Arquetipo: ${identity?.archetype || "No definido"}
+
+Entrega 5-7 escenas con:
+- Descripción visual (qué se ve en pantalla)
+- Audio/Narración o texto superpuesto
+- Duración estimada en segundos
+- Emoción que debe despertar
+
+Tema/Objetivo del video: [ESCRIBE AQUÍ]`
+                            },
+                            {
+                                category: "Estrategia",
+                                emoji: "📅",
+                                color: "#0EA5E9",
+                                title: "Plan de Contenido Mensual",
+                                description: "Estructura editorial para 4 semanas alineada a los pilares.",
+                                generate: () => `Eres un estratega de contenido digital. Crea un plan editorial para 1 mes completo.
+
+MARCA: ${client?.name || "No definido"}
+Frecuencia de publicación declarada: ${identity?.postingFrequency || "No definida"}
+Pilares de contenido: ${parseJSON(identity?.contentPillars).join(', ') || "No definidos"}
+Plataformas activas: Instagram, TikTok (si aplica), LinkedIn (si aplica)
+
+Entrega en tabla semanal con:
+Semana | Día | Pilar | Formato | Concepto / Ángulo | Objetivo
+
+Asegúrate de que el plan tenga variedad de formatos y que cada semana tenga coherencia temática.`
+                            },
+                            {
+                                category: "Estrategia",
+                                emoji: "📊",
+                                color: "#16A34A",
+                                title: "Análisis de Resultados",
+                                description: "Interpreta métricas y propone ajustes estratégicos.",
+                                generate: () => `Actúa como un analista de datos de marketing digital. Voy a darte mis métricas del mes.
+
+CONTEXTO DE LA MARCA:
+- Marca: ${client?.name || "No definido"}
+- Audiencia objetivo: ${identity?.targetAudience || "No definida"}
+- Pilares de contenido: ${parseJSON(identity?.contentPillars).join(', ') || "No definidos"}
+
+[PEGA AQUÍ TUS MÉTRICAS: seguidores, alcance, impresiones, engagement rate, saves, comentarios, posts más y menos exitosos]
+
+Necesito:
+1. Análisis de qué tipo de contenido funcionó mejor y por qué
+2. Patrones en los horarios o días de mayor engagement
+3. 3 hipótesis sobre lo que está pasando con la audiencia
+4. Plan de acción para el próximo mes con al menos 3 cambios concretos`
+                            },
+                            {
+                                category: "Creatividad",
+                                emoji: "🎭",
+                                color: "#EA580C",
+                                title: "Campaña Especial / Efeméride",
+                                description: "Crea una mini-campaña para una fecha importante o evento especial.",
+                                generate: () => `Eres un director creativo. Diseña una mini-campaña de contenido para una fecha especial.
+
+MARCA: ${client?.name || "No definido"}
+Tono: ${identity?.toneOfVoice || "No definido"}
+Arquetipo: ${identity?.archetype || "No definido"}
+Restricciones: ${identity?.constraints || "Ninguna"}
+
+Fecha / Ocasión especial: [ESCRIBE LA FECHA O EVENTO]
+Objetivo de la campaña: [¿Qué quieres lograr? Ventas, awareness, engagement]
+
+Entrega:
+1. Concepto creativo central (el "gran paraguas" de la campaña)
+2. 3-5 piezas de contenido (qué formato, qué dice, qué muestra)
+3. Hashtag o eslogan de la campaña
+4. Calendario de publicación sugerido (cuándo y en qué orden)`
+                            },
+                            {
+                                category: "Creatividad",
+                                emoji: "🤝",
+                                color: "#7C3AED",
+                                title: "Propuesta de Colaboración",
+                                description: "Redacta una propuesta para colaborar con otra marca o influencer.",
+                                generate: () => `Actúa como un experto en marketing de influencers y co-marketing. Crea una propuesta de colaboración.
+
+MARCA PROPONENTE:
+- Nombre: ${client?.name || "No definido"}
+- Propósito: ${identity?.purpose || "No definido"}
+- Audiencia: ${identity?.targetAudience || "No definida"}
+- Tono: ${identity?.toneOfVoice || "No definido"}
+
+Marca o influencer objetivo de la colaboración: [ESCRIBE QUIÉN ES]
+Tipo de colaboración deseada: [Menciones, contenido conjunto, evento, sorteo, etc.]
+
+Redacta el mensaje de propuesta + un brief de la colaboración que incluya:
+1. Por qué esta colaboración tiene sentido
+2. Qué aporta cada parte
+3. Formato del contenido colaborativo
+4. Métricas de éxito esperadas`
+                            },
                         ].map((prompt, index) => {
                             const currentText = customPromptText[index] ?? prompt.generate();
                             const isEditing = editingPromptIdx === index;
                             
                             return (
-                                <div key={index} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h3 className="font-bold text-gray-900">{prompt.title}</h3>
-                                        {!isEditing && (
-                                            <button 
-                                                onClick={() => {
-                                                    if (window.confirm("¿Seguro que desea editar el prompt?")) {
-                                                        setEditingPromptIdx(index);
-                                                        setCustomPromptText(prev => ({...prev, [index]: currentText}));
-                                                    }
-                                                }}
-                                                className="text-gray-400 hover:text-lumen-priority transition-colors p-1"
-                                                title="Editar prompt antes de copiar"
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                    <p className="text-gray-500 text-sm mb-4 flex-1">{prompt.description}</p>
-                                    
-                                    {isEditing ? (
-                                        <textarea 
-                                            className="w-full bg-amber-50 p-4 rounded-xl text-xs font-mono text-gray-800 border border-amber-200 mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500 min-h-[200px]"
-                                            value={currentText}
-                                            onChange={(e) => setCustomPromptText(prev => ({...prev, [index]: e.target.value}))}
-                                        />
-                                    ) : (
-                                        <div className="bg-gray-50 p-4 rounded-xl text-xs font-mono text-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto mb-4 border border-gray-100">
-                                            {currentText}
+                                <div key={index} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all group flex flex-col overflow-hidden">
+                                    {/* Card Header with category color */}
+                                    <div className="p-4 flex items-start gap-3" style={{ borderLeft: `4px solid ${prompt.color}` }}>
+                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: `${prompt.color}15` }}>
+                                            {prompt.emoji}
                                         </div>
-                                    )}
-
-                                    <div className="flex gap-2">
-                                        {isEditing && (
-                                            <button
-                                                onClick={() => setEditingPromptIdx(null)}
-                                                className="px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                                            >
-                                                Listo
-                                            </button>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: prompt.color }}>{prompt.category}</span>
+                                                    <h3 className="font-bold text-gray-900 text-sm leading-tight">{prompt.title}</h3>
+                                                </div>
+                                                {!isEditing && (
+                                                    <button 
+                                                        onClick={() => { setEditingPromptIdx(index); setCustomPromptText(prev => ({...prev, [index]: currentText})); }}
+                                                        className="text-gray-300 hover:text-lumen-priority transition-colors flex-shrink-0 mt-0.5"
+                                                        title="Personalizar prompt"
+                                                    >
+                                                        <Edit3 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <p className="text-gray-400 text-xs mt-0.5 leading-snug">{prompt.description}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Prompt Preview / Editor */}
+                                    <div className="px-4 pb-4 flex-1 flex flex-col">
+                                        {isEditing ? (
+                                            <textarea 
+                                                className="w-full bg-orange-50 p-3 rounded-xl text-[11px] font-mono text-gray-800 border border-orange-200 mb-3 focus:outline-none focus:ring-2 focus:ring-lumen-priority/30 resize-none flex-1"
+                                                style={{ minHeight: '160px' }}
+                                                value={currentText}
+                                                onChange={(e) => setCustomPromptText(prev => ({...prev, [index]: e.target.value}))}
+                                            />
+                                        ) : (
+                                            <div className="bg-gray-50 p-3 rounded-xl text-[11px] font-mono text-gray-500 whitespace-pre-wrap max-h-36 overflow-y-auto mb-3 border border-gray-100 leading-relaxed flex-1">
+                                                {currentText.substring(0, 300)}{currentText.length > 300 ? '...' : ''}
+                                            </div>
                                         )}
-                                        <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(currentText);
-                                                setCopiedPrompt(index);
-                                                setTimeout(() => setCopiedPrompt(null), 2000);
-                                                setToast({ message: "Prompt copiado", type: "success" });
-                                                setEditingPromptIdx(null);
-                                            }}
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-                                        >
-                                            {copiedPrompt === index ? <Check className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
-                                            {copiedPrompt === index ? "¡Copiado!" : "Copiar Prompt Mágico"}
-                                        </button>
+
+                                        <div className="flex gap-2 mt-auto">
+                                            {isEditing && (
+                                                <button
+                                                    onClick={() => setEditingPromptIdx(null)}
+                                                    className="px-3 py-2 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                                >
+                                                    Listo
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(currentText);
+                                                    setCopiedPrompt(index);
+                                                    setTimeout(() => setCopiedPrompt(null), 2000);
+                                                    setToast({ message: "✦ Prompt copiado al portapapeles", type: "success" });
+                                                    setEditingPromptIdx(null);
+                                                }}
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all"
+                                                style={{ 
+                                                    backgroundColor: copiedPrompt === index ? '#16A34A' : prompt.color,
+                                                    color: 'white'
+                                                }}
+                                            >
+                                                {copiedPrompt === index ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                                {copiedPrompt === index ? "¡Copiado!" : "Copiar Prompt"}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             );
                         })}
+                    </div>
+                    
+                    {/* Footer tip */}
+                    <div className="text-center py-4 border-t border-gray-100">
+                        <p className="text-xs text-gray-400 flex items-center justify-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Los prompts se actualizan automáticamente cuando editas el ADN de la marca
+                        </p>
                     </div>
                 </div>
             )}

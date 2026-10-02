@@ -12,6 +12,7 @@ import {
     Phone,
     Briefcase,
     X,
+    Palette,
     Pencil,
     Trash2,
     Search,
@@ -27,7 +28,11 @@ import {
     StickyNote,
     Eye,
     EyeOff,
-    ChevronRight
+    ChevronRight,
+    MessageSquare,
+    Globe,
+    Calendar,
+    LayoutDashboard,
 } from "lucide-react";
 import { Client, SocialCredential } from "@/types/clients";
 import Link from "next/link";
@@ -42,6 +47,7 @@ export default function ClientsAdminPage() {
 
     // Modal & Form State
     const [showForm, setShowForm] = useState(false);
+    const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<FormTab>('info');
@@ -52,6 +58,8 @@ export default function ClientsAdminPage() {
         contactPhone: "",
         whatsapp: "",
         paymentDay: "",
+            brandColor: "#000000",
+            logoUrl: "",
         contactPerson: "",
         email: "",
         address: "",
@@ -90,6 +98,8 @@ export default function ClientsAdminPage() {
             contactPhone: "",
             whatsapp: "",
             paymentDay: "",
+            brandColor: "#000000",
+            logoUrl: "",
             contactPerson: "",
             email: "",
             address: "",
@@ -111,7 +121,9 @@ export default function ClientsAdminPage() {
             contactPhone: client.contactPhone || "",
             whatsapp: client.whatsapp || "",
             paymentDay: client.paymentDay || "",
-            contactPerson: client.contactPerson || "",
+            brandColor: client.brandColor || "#000000",
+            logoUrl: client.logoUrl || "",
+            contactPerson: client.contactName || "",
             email: client.email || "",
             address: client.address || "",
             taxId: client.taxId || "",
@@ -219,8 +231,6 @@ export default function ClientsAdminPage() {
         { id: 'notes', label: 'Notas', icon: <StickyNote className="w-4 h-4" /> }
     ];
 
-    const erpNextUrl = process.env.NEXT_PUBLIC_ERP_URL || 'http://lumen.local:8080';
-
     return (
         <div className="space-y-8 min-h-screen pb-20">
             {/* Header Area */}
@@ -231,7 +241,7 @@ export default function ClientsAdminPage() {
                         Cartera de Clientes
                     </h1>
                     <p className="text-gray-500 text-sm mt-2 max-w-xl">
-                        Gestiona el acceso al portal y sincroniza tus relaciones comerciales con ERPNext en tiempo real.
+                        Gestiona los perfiles, accesos al portal y relaciones comerciales de cada cliente.
                     </p>
                 </div>
 
@@ -286,14 +296,15 @@ export default function ClientsAdminPage() {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all group relative overflow-hidden flex flex-col"
+                                onClick={() => setSelectedClient(client)}
+                                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col cursor-pointer" style={{ '--brand-color': client.brandColor || '#f59e0b' } as React.CSSProperties}
                             >
                                 {/* Decorative Gradient */}
-                                <div className="h-2 w-full bg-gradient-to-r from-gray-100 to-white group-hover:from-lumen-priority group-hover:to-amber-300 transition-all duration-500" />
+                                <div className="h-2 w-full transition-all duration-500" style={{ background: client.brandColor ? `linear-gradient(to right, ${client.brandColor}, ${client.brandColor}88)` : 'linear-gradient(to right, #f3f4f6, white)' }} />
 
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-xl font-bold text-gray-400 group-hover:bg-lumen-priority group-hover:text-white transition-colors">
+                                        <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-xl font-bold text-gray-400 transition-colors" style={{ backgroundColor: client.brandColor ? `${client.brandColor}20` : '', color: client.brandColor || '' }}>
                                             {client.name.charAt(0)}
                                         </div>
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -376,14 +387,6 @@ export default function ClientsAdminPage() {
                                         <FolderOpen className="w-3 h-3" />
                                         Documentos
                                     </Link>
-                                    <a
-                                        href={`${erpNextUrl}/app/customer/${client.erpId}`}
-                                        target="_blank"
-                                        className="flex items-center gap-1.5 px-2 py-1.5 text-[10px] font-medium text-gray-500 hover:text-blue-600 hover:bg-white rounded-lg transition-all ml-auto"
-                                    >
-                                        <ExternalLink className="w-3 h-3" />
-                                        ERPNext
-                                    </a>
                                 </div>
 
                                 {/* Actions Footer */}
@@ -408,7 +411,151 @@ export default function ClientsAdminPage() {
                 </AnimatePresence>
             </div>
 
-            {/* Form Modal with Tabs */}
+            
+            {/* Modal de Perfil del Cliente Centrado */}
+            <AnimatePresence>
+                {selectedClient && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-6 pointer-events-none">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedClient(null)}
+                            className="absolute inset-0 bg-gray-900/40 backdrop-blur-md pointer-events-auto"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                            className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-[480px] bg-white sm:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] z-50 flex flex-col overflow-hidden pointer-events-auto"
+                        >
+                            <div className="flex-1 overflow-y-auto">
+                                {/* Header del Modal */}
+                                <div className="p-8 relative overflow-hidden" style={{ backgroundColor: selectedClient.brandColor || '#111827' }}>
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <button onClick={() => {
+                                            handleOpenEdit(selectedClient);
+                                            setSelectedClient(null);
+                                        }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white backdrop-blur-md transition-colors">
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => setSelectedClient(null)} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white backdrop-blur-md transition-colors">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="flex flex-col items-center pt-4">
+                                        <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl font-bold text-white shadow-xl mb-4 border border-white/20">
+                                            {selectedClient.name.charAt(0)}
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-white text-center">{selectedClient.name}</h2>
+                                        <p className="text-gray-400 mt-1 flex items-center gap-2">
+                                            <Briefcase className="w-4 h-4" />
+                                            {selectedClient.industry || "Sin rubro"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Contenido del Perfil */}
+                                <div className="p-6 space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Contacto</p>
+                                            <p className="text-sm font-bold text-gray-900">{selectedClient.contactName || "No especificado"}</p>
+                                            {selectedClient.contactPhone && (
+                                                <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                                                    <Phone className="w-3.5 h-3.5" />
+                                                    {selectedClient.contactPhone}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Día de Pago</p>
+                                            <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                <Calendar className="w-4 h-4 text-gray-400" />
+                                                {selectedClient.paymentDay ? `Día ${selectedClient.paymentDay}` : "No definido"}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Enlaces y Redes</h3>
+                                        <div className="bg-white border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-50">
+                                            {selectedClient.instagram && (
+                                                <a href={`https://instagram.com/${selectedClient.instagram.replace('@', '')}`} target="_blank" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                                    <div className="w-8 h-8 rounded-lg bg-pink-50 text-pink-500 flex items-center justify-center">
+                                                        <Instagram className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900">{selectedClient.instagram}</p>
+                                                        <p className="text-xs text-gray-500">Instagram</p>
+                                                    </div>
+                                                </a>
+                                            )}
+                                            {selectedClient.whatsapp && (
+                                                <a href={`https://wa.me/${selectedClient.whatsapp.replace(/\D/g, '')}`} target="_blank" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                                    <div className="w-8 h-8 rounded-lg bg-green-50 text-green-500 flex items-center justify-center">
+                                                        <MessageSquare className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900">{selectedClient.whatsapp}</p>
+                                                        <p className="text-xs text-gray-500">WhatsApp</p>
+                                                    </div>
+                                                </a>
+                                            )}
+                                            {selectedClient.website && (
+                                                <a href={selectedClient.website} target="_blank" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center">
+                                                        <Globe className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900">Sitio Web</p>
+                                                        <p className="text-xs text-gray-500 truncate max-w-[200px]">{selectedClient.website}</p>
+                                                    </div>
+                                                </a>
+                                            )}
+                                            {!selectedClient.instagram && !selectedClient.whatsapp && !selectedClient.website && (
+                                                <p className="text-sm text-gray-500 p-4 text-center">No hay enlaces registrados.</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Link Portal & Hub */}
+                                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                                        <a href={`/dashboard/hub/${selectedClient.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-lumen-priority/5 border border-lumen-priority/10 hover:bg-lumen-priority/10 text-lumen-priority transition-colors">
+                                            <LayoutDashboard className="w-6 h-6" />
+                                            <span className="text-sm font-bold">Ir al Hub</span>
+                                        </a>
+                                        <button onClick={() => {
+                                            navigator.clipboard.writeText(`${window.location.origin}/portal/${selectedClient.portalToken}`);
+                                            alert("Link del portal copiado!");
+                                        }} className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100 text-gray-600 transition-colors">
+                                            <ExternalLink className="w-6 h-6" />
+                                            <span className="text-sm font-bold">Copiar Portal</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Footer Danger Zone */}
+                            <div className="p-6 border-t border-gray-100 bg-gray-50">
+                                <button
+                                    onClick={() => {
+                                        handleDelete(selectedClient.id, selectedClient.name);
+                                        setSelectedClient(null);
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-3 text-red-500 font-medium hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Eliminar Cliente Definitivamente
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+{/* Form Modal with Tabs */}
             <AnimatePresence>
                 {showForm && (
                     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -460,6 +607,26 @@ export default function ClientsAdminPage() {
                                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                                             />
                                         </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Color de Marca</label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="color"
+                                                    value={formData.brandColor}
+                                                    onChange={e => setFormData({ ...formData, brandColor: e.target.value })}
+                                                    className="w-12 h-12 p-1 bg-white border border-gray-200 rounded-xl cursor-pointer"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={formData.brandColor}
+                                                    onChange={e => setFormData({ ...formData, brandColor: e.target.value })}
+                                                    className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-lumen-priority/20 focus:border-lumen-priority outline-none transition-all text-sm uppercase"
+                                                    placeholder="#000000"
+                                                />
+                                            </div>
+                                        </div>
+
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
