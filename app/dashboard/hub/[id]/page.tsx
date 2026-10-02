@@ -142,6 +142,9 @@ export default function ClientHubPage() {
     const [newEvent, setNewEvent] = useState({ title: "", date: "", type: "POST IG", status: "BORRADOR" });
     const [currentGridDate, setCurrentGridDate] = useState(new Date());
     const [editingEvent, setEditingEvent] = useState<any>(null);
+    const [copiedPrompt, setCopiedPrompt] = useState<number | null>(null);
+    const [editingPromptIdx, setEditingPromptIdx] = useState<number | null>(null);
+    const [customPromptText, setCustomPromptText] = useState<Record<number, string>>({});
 
     const parseJSON = (str: string | null | undefined): string[] => {
         if (!str) return [];
@@ -242,6 +245,20 @@ export default function ClientHubPage() {
             setToast({ message: "Preferencia guardada", type: "success" });
         } else {
             setToast({ message: "Error al guardar preferencia", type: "error" });
+        }
+    };
+
+    const deletePreference = async (prefId: string) => {
+        if (!window.confirm("¿Seguro que deseas eliminar este criterio?")) return;
+        setSaving(true);
+        const supabase = createClient();
+        const { error } = await supabase.from("StylePreference").delete().eq("id", prefId);
+        setSaving(false);
+        if (!error) {
+            setPreferences(preferences.filter(p => p.id !== prefId));
+            setToast({ message: "Criterio eliminado", type: "success" });
+        } else {
+            setToast({ message: "Error al eliminar criterio", type: "error" });
         }
     };
 
@@ -528,7 +545,7 @@ export default function ClientHubPage() {
                                 <label className="flex items-center gap-2 text-sm text-gray-600 bg-white border border-gray-200 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50"><input type="checkbox" checked={newPref.isStrict} onChange={(e) => setNewPref({ ...newPref, isStrict: e.target.checked })} className="rounded text-red-500 focus:ring-red-500" /><span className={newPref.isStrict ? "text-red-600 font-bold" : ""}>Inquebrantable</span></label>
                             </div>
                             <input type="text" value={newPref.context} onChange={(e) => setNewPref({ ...newPref, context: e.target.value })} placeholder="Contexto / Fuente (Ej: 'El cliente lo mencionó en reunión')" className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lumen-priority/20" />
-                            <div className="flex justify-end"><button onClick={addPreference} className="px-4 py-2.5 bg-lumen-priority text-white text-sm font-medium rounded-lg hover:opacity-90 flex items-center gap-2"><Plus className="w-4 h-4" /> Agregar Criterio</button></div>
+                            <div className="flex justify-end"><button onClick={addPreference} className="px-4 py-2.5 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 flex items-center gap-2"><Plus className="w-4 h-4" /> Agregar Criterio</button></div>
                         </div>
                         {preferences.length === 0 ? (
                             <div className="text-center py-10 text-gray-400"><BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" /><p>Aún no hay criterios.</p></div>
@@ -541,7 +558,14 @@ export default function ClientHubPage() {
                                             <div>
                                                 <p className={`text-sm ${pref.isStrict ? "font-medium text-gray-900" : "text-gray-700"}`}>{pref.rule}</p>
                                                 {pref.context && <p className="text-xs text-gray-400 mt-1 italic">&quot;{pref.context}&quot;</p>}
-                                                <div className="flex items-center gap-3 mt-1.5"><span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">{pref.category?.replace("_", " ")}</span></div>
+                                                <div className="flex items-center gap-3 mt-1.5">
+                                                    <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">{pref.category?.replace("_", " ")}</span>
+                                                    {pref.createdAt && (
+                                                        <span className="text-[10px] text-gray-400">
+                                                            • Registrado el {new Date(pref.createdAt).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <button onClick={() => deletePreference(pref.id)} className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
@@ -774,12 +798,130 @@ export default function ClientHubPage() {
 
             {/* TAB: PROMPTS */}
             {activeTab === "prompts" && (
-                <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center shadow-sm">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MessageSquare className="w-8 h-8 text-gray-300" />
+                <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-1">Banco de Prompts Dinámicos</h2>
+                            <p className="text-gray-500 text-sm">Copiar y pegar en ChatGPT o Claude. Los prompts ya contienen el ADN de {client?.name}.</p>
+                        </div>
+                        <div className="w-12 h-12 bg-lumen-priority/10 rounded-xl flex items-center justify-center">
+                            <MessageSquare className="w-6 h-6 text-lumen-priority" />
+                        </div>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Próximamente</h2>
-                    <p className="text-gray-500 max-w-md mx-auto">Este módulo se desarrollará en las siguientes fases del proyecto Lumen OS.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                            {
+                                title: "Generador de Ideas (Lluvia de ideas)",
+                                description: "Crea 5 ideas de contenido alineadas con los pilares y audiencia.",
+                                generate: () => `Actúa como un estratega de contenido experto. Necesito 5 ideas de contenido para mi marca.
+Contexto de la marca:
+- Propósito: ${identity?.purpose || "No definido"}
+- Tono de voz: ${identity?.toneOfVoice || "No definido"}
+- Arquetipo: ${identity?.archetype || "No definido"}
+- Audiencia: ${identity?.targetAudience || "No definida"}
+- Pilares de contenido: ${parseJSON(identity?.contentPillars).join(', ') || "No definidos"}
+
+Por favor, asegúrate de que las ideas no usen estos hashtags: ${parseJSON(identity?.bannedHashtags).join(', ') || "Ninguno"}.
+Dámelo en formato de tabla con las columnas: Tema, Formato sugerido, y Gancho (Hook).`
+                            },
+                            {
+                                title: "Redactor de Post (Instagram/LinkedIn)",
+                                description: "Escribe el copy de un post basado en el tono de voz de la marca.",
+                                generate: () => `Actúa como un copywriter profesional. Escribe un caption (texto) para un post de redes sociales.
+El tono de voz DEBE ser: ${identity?.toneOfVoice || "No definido"}.
+Arquetipo de marca: ${identity?.archetype || "No definido"}.
+Incluye al final estos hashtags fijos: ${parseJSON(identity?.fixedHashtags).join(' ') || "No definidos"}.
+
+Restricciones importantes de la marca:
+${identity?.constraints || "Ninguna restricción específica."}
+
+Criterios de estilo aprendidos:
+${preferences.map(p => `- ${p.rule} (${p.category})`).join('\n')}
+
+Tema del post: [ESCRIBE AQUÍ DE QUÉ TRATA EL POST]`
+                            },
+                            {
+                                title: "Guion para Video Corto (Reel/TikTok)",
+                                description: "Estructura un guion corto de 30-60 segundos con gancho, retención y CTA.",
+                                generate: () => `Escribe un guion para un video corto (Reel/TikTok) de máximo 60 segundos.
+Audiencia objetivo: ${identity?.targetAudience || "No definida"}.
+Tono: ${identity?.toneOfVoice || "No definido"}.
+
+Criterios de video de la marca:
+${preferences.filter(p => p.category === 'VIDEO').map(p => `- ${p.rule}`).join('\n') || "Ninguno específico."}
+
+Estructura requerida:
+1. Gancho (primeros 3 segundos) - ¡Debe ser impactante!
+2. Cuerpo/Valor (30-40 segundos)
+3. CTA / Llamado a la acción (alineado a los objetivos de la marca)
+
+Tema del video: [ESCRIBE AQUÍ EL TEMA DEL VIDEO]`
+                            }
+                        ].map((prompt, index) => {
+                            const currentText = customPromptText[index] ?? prompt.generate();
+                            const isEditing = editingPromptIdx === index;
+                            
+                            return (
+                                <div key={index} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h3 className="font-bold text-gray-900">{prompt.title}</h3>
+                                        {!isEditing && (
+                                            <button 
+                                                onClick={() => {
+                                                    if (window.confirm("¿Seguro que desea editar el prompt?")) {
+                                                        setEditingPromptIdx(index);
+                                                        setCustomPromptText(prev => ({...prev, [index]: currentText}));
+                                                    }
+                                                }}
+                                                className="text-gray-400 hover:text-lumen-priority transition-colors p-1"
+                                                title="Editar prompt antes de copiar"
+                                            >
+                                                <Edit3 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-gray-500 text-sm mb-4 flex-1">{prompt.description}</p>
+                                    
+                                    {isEditing ? (
+                                        <textarea 
+                                            className="w-full bg-amber-50 p-4 rounded-xl text-xs font-mono text-gray-800 border border-amber-200 mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500 min-h-[200px]"
+                                            value={currentText}
+                                            onChange={(e) => setCustomPromptText(prev => ({...prev, [index]: e.target.value}))}
+                                        />
+                                    ) : (
+                                        <div className="bg-gray-50 p-4 rounded-xl text-xs font-mono text-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto mb-4 border border-gray-100">
+                                            {currentText}
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-2">
+                                        {isEditing && (
+                                            <button
+                                                onClick={() => setEditingPromptIdx(null)}
+                                                className="px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                            >
+                                                Listo
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(currentText);
+                                                setCopiedPrompt(index);
+                                                setTimeout(() => setCopiedPrompt(null), 2000);
+                                                setToast({ message: "Prompt copiado", type: "success" });
+                                                setEditingPromptIdx(null);
+                                            }}
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                                        >
+                                            {copiedPrompt === index ? <Check className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                                            {copiedPrompt === index ? "¡Copiado!" : "Copiar Prompt Mágico"}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </div>

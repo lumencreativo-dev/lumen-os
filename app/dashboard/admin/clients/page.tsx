@@ -103,7 +103,7 @@ export default function ClientsAdminPage() {
     };
 
     const handleOpenEdit = (client: Client) => {
-        setEditingId(client.erpId);
+        setEditingId(client.id);
         setFormData({
             name: client.name,
             instagram: client.instagram || "",
@@ -130,7 +130,7 @@ export default function ClientsAdminPage() {
         try {
             const method = editingId ? 'PUT' : 'POST';
             const body = editingId
-                ? { erpId: editingId, ...formData, socialCredentials }
+                ? { id: editingId, ...formData, socialCredentials }
                 : { ...formData, socialCredentials };
 
             const res = await fetch('/api/clients', {
@@ -142,11 +142,11 @@ export default function ClientsAdminPage() {
             if (res.ok) {
                 const data = await res.json();
                 if (editingId) {
-                    setClients(clients.map(c => c.erpId === editingId ? data.client : c));
-                    alert("✅ Cliente actualizado");
+                    setClients(clients.map(c => c.id === editingId ? data.client : c));
+                    alert("Cliente actualizado");
                 } else {
                     setClients([data.client, ...clients]);
-                    alert(`🎉 ¡Cliente creado en ERPNext!`);
+                    alert(`¡Cliente creado con éxito!`);
                 }
                 setShowForm(false);
             } else {
@@ -161,13 +161,13 @@ export default function ClientsAdminPage() {
         }
     };
 
-    const handleDelete = async (erpId: string, name: string) => {
+    const handleDelete = async (id: string, name: string) => {
         if (!window.confirm(`¿Estás seguro que deseas eliminar a ${name}?`)) return;
 
         try {
-            const res = await fetch(`/api/clients?erpId=${encodeURIComponent(erpId)}`, { method: 'DELETE' });
+            const res = await fetch(`/api/clients?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
             if (res.ok) {
-                setClients(clients.filter(c => c.erpId !== erpId));
+                setClients(clients.filter(c => c.id !== id));
             } else {
                 alert("Error al eliminar");
             }
@@ -300,7 +300,7 @@ export default function ClientsAdminPage() {
                                             <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(client)} className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600">
                                                 <Pencil className="w-4 h-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(client.erpId, client.name)} className="h-8 w-8 hover:bg-red-50 hover:text-red-500">
+                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(client.id, client.name)} className="h-8 w-8 hover:bg-red-50 hover:text-red-500">
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>
                                         </div>
@@ -389,14 +389,14 @@ export default function ClientsAdminPage() {
                                 {/* Actions Footer */}
                                 <div className="bg-gray-50/50 p-3 flex gap-2 border-t border-gray-100">
                                     <Button
-                                        onClick={() => copyPortalLink(client.token)}
+                                        onClick={() => copyPortalLink(client.portalToken)}
                                         variant="outline"
                                         className="flex-1 text-xs h-9 bg-white border-gray-200 hover:bg-gray-50 hover:text-lumen-priority"
                                     >
                                         <LinkIcon className="w-3 h-3 mr-2" />
                                         Copiar Portal
                                     </Button>
-                                    <Link href={`/portal/${client.token}`} target="_blank" className="flex-shrink-0">
+                                    <Link href={`/portal/${client.portalToken}`} target="_blank" className="flex-shrink-0">
                                         <Button variant="ghost" size="icon" className="h-9 w-9 border border-gray-200 bg-white text-gray-400 hover:text-lumen-view">
                                             <ExternalLink className="w-4 h-4" />
                                         </Button>
@@ -701,7 +701,7 @@ export default function ClientsAdminPage() {
                                     Cancelar
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-lumen-priority text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20"
+                                    className="flex-1 bg-black text-white hover:bg-gray-800 shadow-lg shadow-black/20"
                                     onClick={handleSave}
                                     disabled={isSaving || !formData.name}
                                 >

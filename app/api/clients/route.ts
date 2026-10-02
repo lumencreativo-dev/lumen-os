@@ -1,25 +1,22 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { sendWebhook } from "@/lib/webhooks";
-import { notifyNewClient } from "@/lib/discord";
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET() {
     try {
-        const clients = await prisma.client.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: {
-                socialCredentials: true,
-                _count: {
-                    select: {
-                        invoices: true,
-                        deliverables: true,
-                        tasks: true,
-                    },
-                },
-            },
-        });
+        const supabase = await createClient();
+        
+        // Fetch clients
+        const { data: clients, error } = await supabase
+            .from('Client')
+            .select('*')
+            .order('createdAt', { ascending: false });
 
-        return NextResponse.json({ clients, source: "prisma" });
+        if (error) {
+            console.error("Supabase GET Clients Error:", error);
+            return NextResponse.json({ clients: [], error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ clients: clients || [], source: "supabase" });
     } catch (error) {
         console.error("GET Clients Error:", error);
         return NextResponse.json({ clients: [], error: "Internal Error" }, { status: 500 });
@@ -28,63 +25,27 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const supabase = await createClient();
         const body = await request.json();
-        const { name, email, phone, whatsapp, instagram, website, industry, address, taxId, contactPerson, paymentDay, notes, socialCredentials } = body;
+        const { name, email, contactPhone, instagram, website, contactName, status } = body;
 
         if (!name) {
             return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
         }
 
-        const newClient = await prisma.client.create({
-            data: {
-                name: name.trim(),
-                email,
-                phone,
-                whatsapp,
-                instagram: instagram?.replace('@', '').trim(),
-                website,
-                industry: industry?.trim(),
-                address,
-                taxId,
-                contactPerson,
-                paymentDay,
-                notes,
-                socialCredentials: socialCredentials?.length ? {
-                    create: socialCredentials.map((sc: any) => ({
-                        platform: sc.platform,
-                        username: sc.username,
-                        password: sc.password,
-                    })),
-                } : undefined,
-            },
-            include: { socialCredentials: true },
-        });
+        const portalToken = name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
 
-        // Notificaciones
-        sendWebhook('client.created', {
-            client: newClient,
-            portalLink: `/portal/${newClient.portalToken}`,
-        }).catch(console.error);
+        const { data: newClient, error } = await supabase.from('Client').insert({
+            name: name.trim(),
+            email,
+            contactPhone: contactPhone || body.phone,
+            contactName: contactName || body.contactPerson,
+            portalToken
+        }).select().single();
 
-        notifyNewClient({
-            nombre: newClient.name,
-            email: newClient.email || undefined,
-            instagram: newClient.instagram || undefined,
-            industry: newClient.industry || undefined,
-            portalLink: `/portal/${newClient.portalToken}`,
-        }).catch(console.error);
-
-        // Telegram
-        const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-        const telegramChatId = process.env.TELEGRAM_CHAT_ID;
-        if (telegramToken && telegramChatId) {
-            const message = `🎉 *¡NUEVO CLIENTE!*\n\n📌 *Nombre:* ${newClient.name}\n📸 *Instagram:* ${newClient.instagram ? `@${newClient.instagram}` : 'N/A'}\n🏢 *Rubro:* ${newClient.industry || 'N/A'}\n📞 *Contacto:* ${newClient.phone || 'N/A'}\n🔗 *Portal:* /portal/${newClient.portalToken}`;
-
-            fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chat_id: telegramChatId, text: message, parse_mode: "Markdown" }),
-            }).catch(console.error);
+        if (error) {
+            console.error("Supabase insert error:", error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         return NextResponse.json({
@@ -100,6 +61,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
     try {
+        const supabase = await createClient();
         const body = await request.json();
         const { id, ...updates } = body;
 
@@ -107,42 +69,22 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "id requerido" }, { status: 400 });
         }
 
-        // Manejar credenciales sociales por separado
-        const { socialCredentials, ...clientUpdates } = updates;
+        // Remove properties that don't belong to the Client table in Supabase
+        const { socialCredentials, phone, contactPerson, industry, whatsapp, address, taxId, paymentDay, notes, status, token, portalToken, instagram, website, ...clientUpdates } = updates as any;
 
-        const updatedClient = await prisma.client.update({
-            where: { id },
-            data: {
-                name: clientUpdates.name,
-                email: clientUpdates.email,
-                phone: clientUpdates.phone,
-                whatsapp: clientUpdates.whatsapp,
-                instagram: clientUpdates.instagram?.replace('@', '').trim(),
-                website: clientUpdates.website,
-                industry: clientUpdates.industry,
-                address: clientUpdates.address,
-                taxId: clientUpdates.taxId,
-                contactPerson: clientUpdates.contactPerson,
-                paymentDay: clientUpdates.paymentDay,
-                notes: clientUpdates.notes,
-                logo: clientUpdates.logo,
-            },
-            include: { socialCredentials: true },
-        });
+        if (phone) clientUpdates.contactPhone = phone;
+        if (contactPerson) clientUpdates.contactName = contactPerson;
 
-        // Si se enviaron credenciales sociales, reemplazarlas
-        if (socialCredentials) {
-            await prisma.socialCredential.deleteMany({ where: { clientId: id } });
-            if (socialCredentials.length > 0) {
-                await prisma.socialCredential.createMany({
-                    data: socialCredentials.map((sc: any) => ({
-                        clientId: id,
-                        platform: sc.platform,
-                        username: sc.username,
-                        password: sc.password,
-                    })),
-                });
-            }
+        const { data: updatedClient, error } = await supabase
+            .from('Client')
+            .update(clientUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase update error:", error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, client: updatedClient });
@@ -154,6 +96,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
     try {
+        const supabase = await createClient();
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 
@@ -161,7 +104,11 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: "id requerido" }, { status: 400 });
         }
 
-        await prisma.client.delete({ where: { id } });
+        const { error } = await supabase.from('Client').delete().eq('id', id);
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {

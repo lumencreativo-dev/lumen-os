@@ -5,11 +5,10 @@ import { useParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DeliverableCard } from "@/components/portal/DeliverableCard";
 import { DeliverableModal } from "@/components/portal/DeliverableModal";
-import { InvoiceList } from "@/components/portal/InvoiceList";
 import { ContentCalendar } from "@/components/portal/ContentCalendar";
 import { ProjectProgress } from "@/components/portal/ProjectProgress";
 import { SupportChat } from "@/components/portal/SupportChat";
-import { LayoutGrid, Calendar as CalendarIcon, FileText, CheckCircle2, AlertCircle, TrendingUp, Sparkles } from "lucide-react";
+import { LayoutGrid, Calendar as CalendarIcon, CheckCircle2, AlertCircle, TrendingUp, Sparkles } from "lucide-react";
 import { Client } from "@/types/clients";
 import { motion } from "framer-motion";
 
@@ -61,25 +60,6 @@ const generateMockDeliverables = () => [
     }
 ];
 
-const generateMockInvoices = () => [
-    {
-        id: "inv-001",
-        number: "INV-2026-001",
-        date: "01 Ene 2026",
-        amount: 450.00,
-        status: "paid" as const,
-        pdfUrl: "#"
-    },
-    {
-        id: "inv-002",
-        number: "INV-2026-002",
-        date: "01 Feb 2026",
-        amount: 450.00,
-        status: "unpaid" as const,
-        pdfUrl: "#"
-    }
-];
-
 export default function PortalPage() {
     const params = useParams();
     const token = params.token as string;
@@ -115,7 +95,7 @@ export default function PortalPage() {
                 const res = await fetch('/api/clients');
                 if (res.ok) {
                     const data = await res.json();
-                    const found = data.clients?.find((c: Client) => c.token === token);
+                    const found = data.clients?.find((c: Client) => c.portalToken === token || c.token === token);
 
                     if (found) {
                         setClient(found);
@@ -269,9 +249,6 @@ export default function PortalPage() {
                         <TabsTrigger value="progress" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
                             <TrendingUp className="w-4 h-4 mr-2" /> Progreso
                         </TabsTrigger>
-                        <TabsTrigger value="invoices" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
-                            <FileText className="w-4 h-4 mr-2" /> Facturas
-                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="deliverables" className="mt-0">
@@ -306,13 +283,6 @@ export default function PortalPage() {
 
                     <TabsContent value="progress">
                         <ProjectProgress />
-                    </TabsContent>
-
-                    <TabsContent value="invoices">
-                        <InvoiceList
-                            clientName={client?.name !== 'Cliente Demo' ? client?.name : undefined}
-                            invoices={client?.name === 'Cliente Demo' ? generateMockInvoices() : undefined}
-                        />
                     </TabsContent>
                 </Tabs>
             </motion.div>
