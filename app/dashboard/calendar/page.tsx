@@ -58,14 +58,26 @@ export default function PlannerPage() {
 
         try {
             const supabase = createClient();
-            const { data, error } = await supabase
+            
+            // 1. Fetch Calendar Events
+            const { data: events, error: eventsError } = await supabase
                 .from('CalendarEvent')
                 .select('*')
                 .eq('clientId', selectedClient);
             
-            if (error) throw error;
+            if (eventsError) throw eventsError;
             
-            const mappedItems = (data || []).map(item => ({
+            // 2. Fetch Deliverables with deadlines
+            const { data: deliverables, error: devError } = await supabase
+                .from('Deliverable')
+                .select('*')
+                .eq('clientId', selectedClient)
+                .not('deadline', 'is', null);
+
+            if (devError) throw devError;
+            
+            // Map Calendar Events
+            const mappedEvents = (events || []).map(item => ({
                 id: item.id,
                 clientId: item.clientId,
                 title: item.title,
@@ -75,10 +87,26 @@ export default function PlannerPage() {
                 platforms: ['instagram'],
                 status: item.status.toLowerCase() === 'publicado' ? 'published' : (item.status.toLowerCase() === 'aprobado' ? 'approved' : 'draft'),
                 scheduledDate: item.date,
-                date: item.date
+                date: item.date,
+                isDeliverable: false // flag to know it's a manual event
+            }));
+
+            // Map Deliverables (they become automatically part of the calendar!)
+            const mappedDeliverables = (deliverables || []).map(item => ({
+                id: item.id,
+                clientId: item.clientId,
+                title: item.title,
+                concept: item.title,
+                content: item.type,
+                type: item.type === 'video' ? 'video' : 'post',
+                platforms: ['instagram'],
+                status: item.status, // mapped directly since they share similar status names
+                scheduledDate: item.deadline,
+                date: item.deadline,
+                isDeliverable: true // flag to differentiate 
             }));
             
-            setGridItems(mappedItems as any[]);
+            setGridItems([...mappedEvents, ...mappedDeliverables] as any[]);
         } catch (error) {
             console.error("Error fetching items:", error);
         } finally {
@@ -161,6 +189,10 @@ export default function PlannerPage() {
     };
 
     const handleOpenEdit = (item: ContentGridItem) => {
+        if ((item as any).isDeliverable) {
+            alert("🔒 Este evento proviene de un Entregable agendado. Para editarlo, cambiar su estado o modificar su fecha, debes ir a la pestaña 'Aprobaciones'.");
+            return;
+        }
         setEditingItem(item);
         setNewItem({ ...item });
         setShowModal(true);

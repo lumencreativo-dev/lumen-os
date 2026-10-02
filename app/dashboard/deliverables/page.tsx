@@ -183,6 +183,8 @@ export default function DeliverablesPage() {
                 return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 flex items-center gap-1"><MessageCircle className="w-3 h-3" /> Cambios</span>;
             case 'in_revision':
                 return <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 flex items-center gap-1"><Upload className="w-3 h-3" /> En Revisión</span>;
+            case 'published':
+                return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-800 text-white flex items-center gap-1"><Check className="w-3 h-3" /> Publicado</span>;
             default:
                 return <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 flex items-center gap-1"><Clock className="w-3 h-3" /> Pendiente</span>;
         }
@@ -201,6 +203,17 @@ export default function DeliverablesPage() {
     const openDetailPanel = (item: Deliverable) => {
         setSelectedItem(item);
         setShowDetailPanel(true);
+    };
+
+    const handleStatusChange = async (newStatus: DeliverableStatus) => {
+        if (!selectedItem) return;
+        
+        // Optimistic UI update
+        const updated = { ...selectedItem, status: newStatus };
+        setSelectedItem(updated);
+        setItems(items.map(i => i.id === selectedItem.id ? updated : i));
+
+        await deliverableService.updateStatus(selectedItem.id, newStatus);
     };
 
     return (
@@ -559,8 +572,26 @@ export default function DeliverablesPage() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2 mt-3">
-                                    {getStatusBadge(selectedItem.status)}
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                    <div className="relative">
+                                        <select
+                                            value={selectedItem.status}
+                                            onChange={(e) => handleStatusChange(e.target.value as DeliverableStatus)}
+                                            className="appearance-none pl-3 pr-8 py-1.5 text-xs font-bold rounded-full border-0 outline-none cursor-pointer transition-colors
+                                            data-[status=pending]:bg-yellow-100 data-[status=pending]:text-yellow-800
+                                            data-[status=approved]:bg-green-100 data-[status=approved]:text-green-800
+                                            data-[status=changes_requested]:bg-red-100 data-[status=changes_requested]:text-red-800
+                                            data-[status=in_revision]:bg-blue-100 data-[status=in_revision]:text-blue-800
+                                            data-[status=published]:bg-gray-800 data-[status=published]:text-white"
+                                            data-status={selectedItem.status}
+                                        >
+                                            <option value="pending">⏳ Pendiente</option>
+                                            <option value="in_revision">👀 En Revisión</option>
+                                            <option value="changes_requested">📝 Cambios Solicitados</option>
+                                            <option value="approved">✅ Aprobado</option>
+                                            <option value="published">🚀 Publicado</option>
+                                        </select>
+                                    </div>
                                     <VersionBadge version={selectedItem.currentVersion} isLatest />
                                     {selectedItem.deadline && <DeadlineIndicator deadline={selectedItem.deadline} />}
                                 </div>

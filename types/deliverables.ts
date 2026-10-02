@@ -1,6 +1,6 @@
 export type DeliverableType = 'image' | 'video' | 'document' | 'link' | 'carousel';
 
-export type DeliverableStatus = 'pending' | 'approved' | 'changes_requested' | 'in_revision';
+export type DeliverableStatus = 'pending' | 'approved' | 'changes_requested' | 'in_revision' | 'published';
 
 export type DeliverablePriority = 'low' | 'normal' | 'high' | 'urgent';
 
