@@ -20,9 +20,12 @@ import {
     ChevronDown,
     ChevronRight,
     Archive,
-    Briefcase
+    Briefcase,
+    Moon,
+    Sun
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/providers/AuthProvider";
+import { ThemeProvider, useTheme } from "@/components/providers/ThemeProvider";
 import { UserRole } from "@/types/auth";
 
 // Menu Configuration with Role Access
@@ -56,6 +59,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     const [isFrozenOpen, setIsFrozenOpen] = useState(false);
     const pathname = usePathname();
     const { user, isLoading, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
 
     const handleLogout = () => {
         logout();
@@ -156,7 +160,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50/50">
-                <Link href="/dashboard/profile" className="flex items-center gap-3 mb-4 px-2 hover:bg-white p-2 rounded-lg transition-all cursor-pointer group shadow-sm border border-transparent hover:border-gray-200">
+                <Link href="/dashboard/profile" className="flex items-center gap-3 mb-3 px-2 hover:bg-white p-2 rounded-lg transition-all cursor-pointer group shadow-sm border border-transparent hover:border-gray-200">
                     <div className="w-8 h-8 rounded-full bg-lumen-priority/10 flex items-center justify-center text-lumen-priority font-bold text-xs ring-1 ring-lumen-priority/20 group-hover:ring-lumen-priority transition-all">
                         {user?.name?.substring(0, 2).toUpperCase() || "KF"}
                     </div>
@@ -167,6 +171,29 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                         <p className="text-xs text-gray-500 truncate capitalize">{user?.role || "Invitado"}</p>
                     </div>
                 </Link>
+
+                {/* Dark Mode Toggle */}
+                <button
+                    onClick={toggleTheme}
+                    className="w-full flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl border border-gray-200 bg-white hover:border-lumen-priority/30 hover:bg-lumen-priority/5 transition-all group"
+                    title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                >
+                    <div className="flex items-center gap-2">
+                        {theme === 'dark' ? (
+                            <Sun className="w-4 h-4 text-amber-400" />
+                        ) : (
+                            <Moon className="w-4 h-4 text-gray-400 group-hover:text-lumen-priority" />
+                        )}
+                        <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">
+                            {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                        </span>
+                    </div>
+                    {/* Toggle pill */}
+                    <div className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${theme === 'dark' ? 'bg-lumen-priority' : 'bg-gray-200'}`}>
+                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </div>
+                </button>
+
                 <Button variant="ghost" size="sm" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Cerrar Sesión
@@ -229,9 +256,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
-        <AuthProvider>
-            <DashboardShell>{children}</DashboardShell>
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <DashboardShell>{children}</DashboardShell>
+            </AuthProvider>
+        </ThemeProvider>
     );
 }
 
