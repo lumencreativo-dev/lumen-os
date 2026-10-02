@@ -78,7 +78,20 @@ export default function ClientProfilePage() {
             if (storedStrategy) setStrategy(storedStrategy);
 
             const storedBrand = localStorage.getItem(`lumen_brand_${id}`);
-            if (storedBrand) setBrandKit(JSON.parse(storedBrand));
+            if (storedBrand) {
+                const parsed = JSON.parse(storedBrand);
+                setBrandKit({
+                    ...parsed,
+                    primaryColor: clientData.brandColor || parsed.primaryColor,
+                    logoUrl: clientData.logoUrl || parsed.logoUrl
+                });
+            } else {
+                setBrandKit(prev => ({
+                    ...prev,
+                    primaryColor: clientData.brandColor || prev.primaryColor,
+                    logoUrl: clientData.logoUrl || prev.logoUrl
+                }));
+            }
 
             // 3. Load Financials
             if (clientData.id) {
@@ -97,12 +110,25 @@ export default function ClientProfilePage() {
         setLoading(false);
     };
 
-    const saveExtensions = () => {
-        if (!client) return;
-        localStorage.setItem(`lumen_strategy_${client.id}`, strategy);
-        localStorage.setItem(`lumen_brand_${client.id}`, JSON.stringify(brandKit));
-        alert("✅ Información guardada localmente");
-    };
+    const saveExtensions = async () => {
+    if (!client) return;
+    setLoading(true);
+    try {
+        const res = await fetch("/api/clients", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: client.id, brandColor: brandKit.primaryColor, logoUrl: brandKit.logoUrl })
+        });
+        if (res.ok) {
+            localStorage.setItem(`lumen_strategy_${client.id}`, strategy);
+            localStorage.setItem(`lumen_brand_${client.id}`, JSON.stringify(brandKit));
+            alert("Configuracion de Marca Guardada");
+        } else {
+            alert("Error al guardar cambios");
+        }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+};
 
     const copyToClipboard = async (text: string, index: number) => {
         await navigator.clipboard.writeText(text);
@@ -523,3 +549,5 @@ export default function ClientProfilePage() {
         </div>
     );
 }
+
+

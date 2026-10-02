@@ -12,6 +12,7 @@ import { LayoutGrid, Calendar as CalendarIcon, CheckCircle2, AlertCircle, Trendi
 import { Client } from "@/types/clients";
 import { motion } from "framer-motion";
 import { ClientBrief } from "@/components/portal/ClientBrief";
+import { useBrand } from "@/contexts/BrandContext";
 
 // Mock Data Generators
 const generateMockDeliverables = () => [
@@ -64,6 +65,7 @@ const generateMockDeliverables = () => [
 export default function PortalPage() {
     const params = useParams();
     const token = params.token as string;
+    const { setBranding } = useBrand();
 
     const [client, setClient] = useState<Client | null>(null);
     const [loading, setLoading] = useState(true);
@@ -82,12 +84,9 @@ export default function PortalPage() {
             try {
                 // Demo mode - accept any token with 'demo' or just show demo content
                 if (token === 'demo' || token.includes('demo')) {
-                    setClient({
-                        id: 'demo',
-                        name: 'Cliente Demo',
-                        portalToken: 'demo',
-                        
-                    });
+                    const demoClient = { id: 'demo', name: 'Cliente Demo', portalToken: 'demo', brandColor: '#F7931E' };
+                    setClient(demoClient);
+                    setBranding(demoClient.brandColor, null, demoClient.name);
                     setLoading(false);
                     return;
                 }
@@ -100,32 +99,24 @@ export default function PortalPage() {
 
                     if (found) {
                         setClient(found);
+                        setBranding(found.brandColor || '#F7931E', found.logoUrl || null, found.name);
                     } else {
                         // Fallback to demo mode for any token (MVP friendly)
-                        setClient({
-                            id: 'demo',
-                            name: 'Cliente Demo',
-                            portalToken: token,
-                            
-                        });
+                        const fallback = { id: 'demo', name: 'Cliente Demo', portalToken: token };
+                        setClient(fallback);
+                        setBranding('#F7931E', null, fallback.name);
                     }
                 } else {
                     // API error - still show demo
-                    setClient({
-                        id: 'demo',
-                        name: 'Cliente Demo',
-                        portalToken: token,
-                        
-                    });
+                    const fallback = { id: 'demo', name: 'Cliente Demo', portalToken: token };
+                    setClient(fallback);
+                    setBranding('#F7931E', null, fallback.name);
                 }
             } catch (err) {
                 // Connection error - still show demo
-                setClient({
-                    id: 'demo',
-                    name: 'Cliente Demo',
-                    portalToken: token,
-                    
-                });
+                const fallback = { id: 'demo', name: 'Cliente Demo', portalToken: token };
+                setClient(fallback);
+                setBranding('#F7931E', null, fallback.name);
             } finally {
                 setLoading(false);
             }
@@ -173,21 +164,61 @@ export default function PortalPage() {
         );
     }
 
+    const brandColor = client?.brandColor || '#F7931E';
+    const logoUrl = client?.logoUrl;
+
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            {/* Welcome Header */}
+            {/* Branded Hero Header */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <div className="flex items-start justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                            Hola, {client?.name}
-                            <Sparkles className="w-6 h-6 text-amber-400" />
-                        </h1>
-                        <p className="text-gray-500 mt-1">Bienvenido a tu espacio de trabajo. Aquí tienes el resumen de hoy.</p>
+                <div 
+                    className="relative rounded-3xl overflow-hidden border border-gray-100 shadow-sm"
+                    style={{ background: `linear-gradient(135deg, ${brandColor}18 0%, ${brandColor}06 60%, transparent 100%)` }}
+                >
+                    {/* Decorative blob */}
+                    <div 
+                        className="absolute -top-12 -right-12 w-64 h-64 rounded-full opacity-10 blur-3xl pointer-events-none"
+                        style={{ background: brandColor }}
+                    />
+
+                    <div className="relative z-10 p-8 flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-5">
+                            {/* Client Logo / Avatar */}
+                            <div 
+                                className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden border-2 border-white/60"
+                                style={{ background: logoUrl ? 'white' : brandColor }}
+                            >
+                                {logoUrl ? (
+                                    <img src={logoUrl} alt={client?.name} className="w-full h-full object-contain p-1" />
+                                ) : (
+                                    <span className="text-white text-3xl font-black">
+                                        {client?.name?.substring(0, 1).toUpperCase()}
+                                    </span>
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: brandColor }}>
+                                    Tu Portal Lumen
+                                </p>
+                                <h1 className="text-3xl font-black text-gray-900 leading-tight">
+                                    Hola, {client?.name} <span className="inline-block animate-bounce">👋</span>
+                                </h1>
+                                <p className="text-gray-500 mt-1 text-sm">Bienvenido a tu espacio de trabajo. Aquí tienes el resumen de hoy.</p>
+                            </div>
+                        </div>
+
+                        {/* Brand color accent badge */}
+                        <div className="hidden md:flex flex-col items-center gap-2 text-right">
+                            <div 
+                                className="w-3 h-3 rounded-full shadow-sm"
+                                style={{ backgroundColor: brandColor }}
+                            />
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tu Marca</span>
+                        </div>
                     </div>
                 </div>
             </motion.div>
