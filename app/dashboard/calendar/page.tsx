@@ -391,13 +391,10 @@ export default function PlannerPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
-                        <span className="bg-lumen-priority text-white p-2 rounded-xl shadow-lg shadow-amber-500/20">
-                            <LayoutList className="w-6 h-6" />
-                        </span>
+                    <h1 className="lumen-title text-4xl font-black text-gray-900 tracking-tight">
                         Planificador Editorial
                     </h1>
-                    <p className="text-gray-500 text-sm mt-1 ml-1">Gestiona el contenido de tus clientes conectado a ERPNext.</p>
+                    <p className="text-gray-500 text-sm mt-1">Gestiona el contenido de tus clientes conectados a Lumen OS.</p>
                 </div>
 
                 <div className="flex items-center gap-4 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">

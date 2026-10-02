@@ -53,7 +53,7 @@ export default function HubPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight">Hub de Clientes</h1>
+                    <h1 className="lumen-title text-4xl font-black text-gray-900 tracking-tight">Hub de Clientes</h1>
                     <p className="text-sm text-gray-500 mt-1">
                         Centro de operaciones por cliente. Identidad, fechas y prompts.
                     </p>
@@ -62,13 +62,13 @@ export default function HubPage() {
 
             {/* Search */}
             <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                     type="text"
                     placeholder="Buscar cliente..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-lumen-priority/20 focus:border-lumen-priority transition-all"
+                    className="w-full pl-11 pr-5 py-2.5 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-lumen-priority/20 focus:border-lumen-priority transition-all shadow-sm"
                 />
             </div>
 

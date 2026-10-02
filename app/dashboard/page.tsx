@@ -19,12 +19,12 @@ export default function DashboardPage() {
                 transition={{ duration: 0.4 }}
             >
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+                    <h1 className="lumen-title text-4xl font-black text-gray-900 tracking-tight">
                         Hola, {name} 👋
                     </h1>
                     <p className="text-gray-500 mt-1">Aquí está tu centro de comando de hoy.</p>
                 </div>
-                <div className="hidden md:flex items-center gap-2 bg-white border border-gray-100 shadow-sm rounded-2xl px-4 py-2">
+                <div className="hidden md:flex items-center gap-2 bg-white border border-gray-100 shadow-sm rounded-full px-4 py-2">
                     <div className="w-2 h-2 rounded-full bg-lumen-priority animate-pulse" />
                     <span className="text-sm font-semibold text-gray-700">Lumen OS</span>
                     <span className="text-xs text-gray-400 font-mono">v2.0</span>

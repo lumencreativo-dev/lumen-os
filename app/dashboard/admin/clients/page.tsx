@@ -236,8 +236,7 @@ export default function ClientsAdminPage() {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
-                        <Users className="w-8 h-8 text-lumen-priority" />
+                    <h1 className="lumen-title text-4xl font-black text-gray-900 tracking-tight">
                         Cartera de Clientes
                     </h1>
                     <p className="text-gray-500 text-sm mt-2 max-w-xl">
@@ -246,31 +245,30 @@ export default function ClientsAdminPage() {
                 </div>
 
                 <div className="flex gap-3">
-                    <Button
-                        variant="outline"
-                        className="border-gray-200 hover:bg-white hover:border-gray-300 shadow-sm"
+                    <button
+                        className="lumen-btn lumen-btn-ghost text-gray-600"
                         onClick={loadClients}
                     >
-                        <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                         Sincronizar
-                    </Button>
-                    <Button
-                        className="bg-gray-900 hover:bg-black text-white shadow-lg shadow-gray-900/20 transition-all hover:-translate-y-0.5"
+                    </button>
+                    <button
+                        className="lumen-btn lumen-btn-primary"
                         onClick={handleOpenCreate}
                     >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-4 h-4" />
                         Nuevo Cliente
-                    </Button>
+                    </button>
                 </div>
             </div>
 
             {/* Search Bar */}
             <div className="relative max-w-md">
-                <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                     type="text"
                     placeholder="Buscar por nombre, rubro..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-lumen-priority/20 focus:border-lumen-priority/50 outline-none shadow-sm transition-all"
+                    className="w-full pl-11 pr-5 py-2.5 bg-white border border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-lumen-priority/20 focus:border-lumen-priority/50 outline-none shadow-sm transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />

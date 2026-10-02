@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     LayoutList,
     Users,
@@ -257,9 +258,18 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                 </header>
 
                 <main className="flex-1 p-4 md:p-8 overflow-x-hidden relative">
-                    <div className="relative z-10">
-                        {children}
-                    </div>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={pathname}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.22, ease: "easeOut" }}
+                            className="relative z-10"
+                        >
+                            {children}
+                        </motion.div>
+                    </AnimatePresence>
                 </main>
             </div>
         </div>
