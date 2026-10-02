@@ -42,113 +42,260 @@
   }
 }
 
-/* ===== BASE STYLES ===== */
+/* ===== BASE ===== */
 html {
   scroll-behavior: smooth;
 }
 
+/* ===== LIGHT MODE REFINEMENT ===== */
 body {
-  background-color: #F9FAFB;
-  color: #111827;
+  background-color: #FAFAFA;
+  color: #111111;
   font-family: var(--font-sans);
   line-height: 1.6;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
-/* ===== DARK MODE OVERRIDES ===== */
+/* ===== DARK MODE — Sistema de capas profundas ===== */
+/*
+  Layer Z0 (page bg):     #080808  — negro casi puro
+  Layer Z1 (sidebar):     #0F0F0F  — negro rico
+  Layer Z2 (cards):       #161616  — superficie elevada
+  Layer Z3 (inputs/hover):#1E1E1E  — control bg
+  Layer Z4 (active/pill): #252525  — elemento seleccionado
+  Borders:                rgba(255,255,255,0.07) — casi invisible, elegante
+  Text primary:           #EFEFEF  — blanco cálido, no puro
+  Text secondary:         #888888  — gris medio
+  Text muted:             #555555  — gris oscuro
+  Accent:                 #F7931E  — naranja Lumen (sin cambios)
+*/
+
 .dark body {
-  background-color: #0F0F0F;
-  color: #F1F5F9;
+  background-color: #080808;
+  color: #EFEFEF;
 }
 
 .dark {
-  --tw-bg-opacity: 1;
   color-scheme: dark;
 }
 
-/* Dark mode: panel / card backgrounds */
-.dark .bg-white {
-  background-color: #1A1A1A !important;
-}
-.dark .bg-gray-50 {
-  background-color: #141414 !important;
-}
+/* === Z0: Page background === */
+.dark .bg-gray-50,
 .dark .bg-gray-100 {
-  background-color: #242424 !important;
-}
-.dark .bg-gray-200 {
-  background-color: #2E2E2E !important;
+  background-color: #0F0F0F !important;
 }
 
-/* Dark mode: borders */
+/* === Z2: Cards & Panels (el "bg-white" de las tarjetas) === */
+.dark .bg-white {
+  background-color: #161616 !important;
+}
+
+/* === Z3: Inputs, hovers, nested elements === */
+.dark .bg-gray-200 {
+  background-color: #1E1E1E !important;
+}
+
+/* === Borders: ultra-sutiles === */
 .dark .border-gray-100 {
-  border-color: #2A2A2A !important;
+  border-color: rgba(255,255,255,0.07) !important;
 }
 .dark .border-gray-200 {
-  border-color: #333333 !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+.dark .border-gray-300 {
+  border-color: rgba(255,255,255,0.13) !important;
+}
+.dark .divide-gray-100 > * + *,
+.dark .divide-gray-200 > * + * {
+  border-color: rgba(255,255,255,0.07) !important;
 }
 
-/* Dark mode: text */
-.dark .text-gray-900 {
-  color: #F1F5F9 !important;
+/* === Texto === */
+.dark .text-gray-900,
+.dark .text-gray-800 {
+  color: #EFEFEF !important;
 }
 .dark .text-gray-700 {
-  color: #CBD5E1 !important;
+  color: #C0C0C0 !important;
 }
 .dark .text-gray-600 {
-  color: #94A3B8 !important;
+  color: #999999 !important;
 }
 .dark .text-gray-500 {
-  color: #64748B !important;
+  color: #777777 !important;
 }
 .dark .text-gray-400 {
-  color: #475569 !important;
+  color: #555555 !important;
 }
 
-/* Dark mode: sidebar */
-.dark aside,
-.dark nav {
-  background-color: #111111 !important;
-  border-color: #222222 !important;
+/* === Sidebar & Nav === */
+.dark aside {
+  background-color: #0F0F0F !important;
+  border-color: rgba(255,255,255,0.06) !important;
 }
 
-/* Dark mode: inputs */
+/* === Inputs === */
 .dark input,
 .dark textarea,
 .dark select {
   background-color: #1E1E1E !important;
-  border-color: #333333 !important;
-  color: #F1F5F9 !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: #EFEFEF !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #555555 !important;
 }
 
-/* Dark mode: shadows softer */
+/* === Cards: darle profundidad con sombra interna === */
 .dark .shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.4) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03) !important;
 }
 .dark .shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.7) !important;
 }
-.dark .shadow-xl {
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.6) !important;
-}
-
-/* Dark mode: gradient backgrounds */
-.dark .bg-gradient-to-br.from-gray-50 {
-  background: linear-gradient(135deg, #141414, #0F0F0F) !important;
+.dark .shadow-xl,
+.dark .shadow-2xl {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important;
 }
 
-/* Orange stays vivid in dark mode — it's the brand accent */
-.dark .bg-lumen-priority,
-.dark .text-lumen-priority {
-  /* keep as-is */
+/* === Hover states === */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: #1E1E1E !important;
 }
 
-/* Scrollbar in dark */
+/* === Gradient overrides para el dark === */
+.dark [class*="from-gray-50"],
+.dark [class*="from-gray-100"] {
+  --tw-gradient-from: #0F0F0F !important;
+}
+
+/* === Main content area === */
+.dark .min-h-screen {
+  background-color: #080808;
+}
+
+/* === Naranja: SIEMPRE vivid (es el alma de la marca) === */
+/* No tocar: bg-lumen-priority, text-lumen-priority, border-lumen-priority */
+
+/* === Scrollbar elegante en dark === */
 .dark ::-webkit-scrollbar-track {
-  background: #1A1A1A;
+  background: #0F0F0F;
 }
 .dark ::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #F7931E;
+}
+
+
+/* ===== SISTEMA DE BOTONES GLOBAL (pill style) ===== */
+/* Inspirado en CreativeDiseños: botones tipo píldora redondeada */
+
+.lumen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding: 0.625rem 1.25rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.lumen-btn-primary {
+  background-color: #F7931E;
+  color: #ffffff;
+}
+.lumen-btn-primary:hover {
+  background-color: #e8821a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(247,147,30,0.4);
+}
+
+.lumen-btn-outline {
+  background-color: transparent;
+  color: #F7931E;
+  border: 1.5px solid #F7931E;
+}
+.lumen-btn-outline:hover {
+  background-color: rgba(247,147,30,0.08);
+}
+
+.lumen-btn-ghost {
+  background-color: transparent;
+  color: inherit;
+  border: 1.5px solid rgba(0,0,0,0.12);
+}
+.dark .lumen-btn-ghost {
+  border-color: rgba(255,255,255,0.12);
+}
+.lumen-btn-ghost:hover {
+  background-color: rgba(0,0,0,0.06);
+}
+.dark .lumen-btn-ghost:hover {
+  background-color: rgba(255,255,255,0.06);
+}
+
+/* Tags / Chips tipo pill */
+.lumen-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(247,147,30,0.1);
+  color: #F7931E;
+  border: 1px solid rgba(247,147,30,0.25);
+}
+
+.lumen-tag-gray {
+  background-color: rgba(0,0,0,0.06);
+  color: #555;
+  border-color: rgba(0,0,0,0.1);
+}
+.dark .lumen-tag-gray {
+  background-color: rgba(255,255,255,0.06);
+  color: #999;
+  border-color: rgba(255,255,255,0.1);
+}
+
+
+/* ===== TÍTULOS CON PUNTO NARANJA (estilo CreativeDiseños) ===== */
+/* Uso: <h1 class="lumen-title">Hub de Clientes</h1> */
+.lumen-title::after {
+  content: ".";
+  color: #F7931E;
+}
+
+
+/* ===== TARJETAS CON ESTILO LUMEN ===== */
+.lumen-card {
+  background: #ffffff;
+  border: 1px solid #EBEBEB;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.lumen-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+.dark .lumen-card {
+  background: #161616;
+  border-color: rgba(255,255,255,0.07);
+}
+.dark .lumen-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
 }
 
 

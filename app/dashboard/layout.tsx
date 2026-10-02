@@ -106,13 +106,18 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                             key={item.href}
                             href={item.href}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all ${isActive
-                                ? "bg-lumen-priority/10 text-lumen-priority font-semibold border-l-2 border-lumen-priority pl-[14px]"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                                }`}
+                            className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all relative group ${
+                                isActive
+                                    ? "text-lumen-priority font-semibold"
+                                    : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                            }`}
                         >
-                            <item.icon className={`w-5 h-5 ${isActive ? "text-lumen-priority" : "text-gray-400"}`} />
-                            {item.name}
+                            {/* Dot indicator — active */}
+                            {isActive && (
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-lumen-priority rounded-full" />
+                            )}
+                            <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? "text-lumen-priority" : "text-gray-400 group-hover:text-gray-600"}`} />
+                            <span className="truncate">{item.name}</span>
                         </Link>
                     );
                 })}
@@ -172,32 +177,39 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                     </div>
                 </Link>
 
-                {/* Dark Mode Toggle */}
+                {/* Theme Toggle — Pill style like CreativeDiseños */}
                 <button
                     onClick={toggleTheme}
-                    className="w-full flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl border border-gray-200 bg-white hover:border-lumen-priority/30 hover:bg-lumen-priority/5 transition-all group"
-                    title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                    className="w-full flex items-center gap-1.5 mb-2 p-1 rounded-full bg-gray-100 border border-gray-200 transition-all hover:border-gray-300"
+                    style={{ minHeight: '36px' }}
                 >
-                    <div className="flex items-center gap-2">
-                        {theme === 'dark' ? (
-                            <Sun className="w-4 h-4 text-amber-400" />
-                        ) : (
-                            <Moon className="w-4 h-4 text-gray-400 group-hover:text-lumen-priority" />
-                        )}
-                        <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">
-                            {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
-                        </span>
-                    </div>
-                    {/* Toggle pill */}
-                    <div className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${theme === 'dark' ? 'bg-lumen-priority' : 'bg-gray-200'}`}>
-                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </div>
+                    {/* Día */}
+                    <span className={`flex items-center gap-1.5 flex-1 justify-center py-1 px-2 rounded-full text-xs font-semibold transition-all ${
+                        theme === 'light'
+                            ? 'bg-white text-gray-800 shadow-sm'
+                            : 'text-gray-500'
+                    }`}>
+                        <Sun className="w-3.5 h-3.5" />
+                        Día
+                    </span>
+                    {/* Noche */}
+                    <span className={`flex items-center gap-1.5 flex-1 justify-center py-1 px-2 rounded-full text-xs font-semibold transition-all ${
+                        theme === 'dark'
+                            ? 'bg-lumen-priority text-white shadow-sm'
+                            : 'text-gray-500'
+                    }`}>
+                        <Moon className="w-3.5 h-3.5" />
+                        Noche
+                    </span>
                 </button>
 
-                <Button variant="ghost" size="sm" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleLogout}>
-                    <LogOut className="w-4 h-4 mr-2" />
+                <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                >
+                    <LogOut className="w-4 h-4" />
                     Cerrar Sesión
-                </Button>
+                </button>
             </div>
         </div>
     );
