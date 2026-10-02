@@ -208,20 +208,26 @@ export default function DeliverablesPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                        Entregables & Aprobaciones
-                        {isLoading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                    <h1 className="lumen-title text-4xl font-black text-gray-900 tracking-tight">
+                        Aprobaciones
                     </h1>
-                    <p className="text-gray-500 text-sm">Gestiona los entregables visibles en el portal del cliente.</p>
+                    <p className="text-gray-500 text-sm mt-1">Gestiona los entregables visibles en el portal del cliente.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={loadItems} title="Refrescar">
+                    <button
+                        onClick={loadItems}
+                        className="lumen-btn lumen-btn-ghost text-gray-500"
+                        title="Refrescar"
+                    >
                         <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    </Button>
-                    <Button onClick={() => setShowForm(!showForm)} className="bg-lumen-priority hover:bg-lumen-priority/90 text-white">
-                        <Plus className="w-4 h-4 mr-2" />
+                    </button>
+                    <button
+                        onClick={() => setShowForm(!showForm)}
+                        className="lumen-btn lumen-btn-primary"
+                    >
+                        <Plus className="w-4 h-4" />
                         Nuevo Entregable
-                    </Button>
+                    </button>
                 </div>
             </div>
 
@@ -231,19 +237,19 @@ export default function DeliverablesPage() {
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-3">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Buscar por título o cliente..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-lumen-priority/20"
+                        className="w-full pl-11 pr-5 py-2.5 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-lumen-priority/20 focus:border-lumen-priority shadow-sm transition-all"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value as FilterStatus)}
-                    className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm"
+                    className="px-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-lumen-priority/20"
                 >
                     <option value="all">Todos los estados</option>
                     <option value="pending">Pendientes</option>
@@ -254,7 +260,7 @@ export default function DeliverablesPage() {
                 <select
                     value={clientFilter}
                     onChange={e => setClientFilter(e.target.value)}
-                    className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm"
+                    className="px-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-lumen-priority/20"
                 >
                     <option value="all">Todos los clientes</option>
                     {clients.map(c => (
