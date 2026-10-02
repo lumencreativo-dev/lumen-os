@@ -229,6 +229,22 @@ export default function ClientHubPage() {
         else { setIsEditingContact(false); setToast({ message: "Contacto guardado", type: "success" }); }
     };
 
+    const addPreference = async () => {
+        if (!newPref.rule) return;
+        setSaving(true);
+        const supabase = createClient();
+        const payload = { clientId, rule: newPref.rule, category: newPref.category, isStrict: newPref.isStrict, context: newPref.context };
+        const { data, error } = await supabase.from("StylePreference").insert(payload).select().single();
+        setSaving(false);
+        if (data) {
+            setPreferences([data, ...preferences]);
+            setNewPref({ rule: "", category: "DISEÑO", isStrict: false, context: "" });
+            setToast({ message: "Preferencia guardada", type: "success" });
+        } else {
+            setToast({ message: "Error al guardar preferencia", type: "error" });
+        }
+    };
+
     // ==================== CALENDAR FUNCTIONS ====================
     const addCalendarEvent = async () => {
         if (!newEvent.title || !newEvent.date) return;
