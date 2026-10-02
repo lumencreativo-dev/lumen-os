@@ -180,9 +180,9 @@ export default function PlannerPage() {
         for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
 
         return (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden flex flex-col h-full">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden flex flex-col h-full">
                 {/* Calendar Header */}
-                <div className="flex items-center justify-between p-6 bg-white border-b border-gray-100">
+                <div className="flex items-center justify-between p-6 bg-[#212121] border-b border-gray-800">
                     <div className="flex items-center gap-4">
                         <div className="flex gap-1">
                             <Button variant="outline" size="icon" onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="rounded-full w-8 h-8 hover:bg-lumen-clarity border-gray-200">
@@ -192,8 +192,8 @@ export default function PlannerPage() {
                                 <ChevronRight className="w-4 h-4 text-gray-600" />
                             </Button>
                         </div>
-                        <h2 className="text-3xl font-bold capitalize text-gray-900 tracking-wide">
-                            {currentDate.toLocaleString('es-ES', { month: 'long' })} <span className="text-gray-300 text-xl">{year}</span>
+                        <h2 className="text-3xl font-bold capitalize text-[#F5F5F5] tracking-wide">
+                            {currentDate.toLocaleString('es-ES', { month: 'long' })} <span className="text-[#F5F5F5]/40 text-xl font-light">{year}</span>
                         </h2>
                     </div>
                     <Button onClick={() => handleOpenCreate()} className="bg-lumen-priority text-white hover:bg-orange-500 transition-all rounded-full px-6 shadow-lg shadow-amber-400/30">
@@ -205,7 +205,7 @@ export default function PlannerPage() {
                 {/* Days Header */}
                 <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
                     {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(d => (
-                        <div key={d} className="py-3 text-center text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest font-sans">
+                        <div key={d} className="py-3 text-center text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest font-sans">
                             {d}
                         </div>
                     ))}
@@ -224,7 +224,7 @@ export default function PlannerPage() {
                             <div
                                 key={i}
                                 onClick={() => handleOpenCreate(dateStr)}
-                                className={`group relative p-2 transition-all hover:bg-blue-50/20 cursor-pointer flex flex-col gap-2 ${isToday ? 'bg-orange-50 ring-2 ring-inset ring-lumen-priority/30' : ''}`}
+                                className={`group relative p-2 transition-all hover:bg-[#1A237E]/5 cursor-pointer flex flex-col gap-2 ${isToday ? 'bg-[#F7931E]/5 ring-2 ring-inset ring-[#F7931E]/20' : ''}`}
                             >
                                 {/* Date Number */}
                                 <div className="flex justify-between items-start">
@@ -246,9 +246,9 @@ export default function PlannerPage() {
                                             onClick={(e) => { e.stopPropagation(); handleOpenEdit(item); }}
                                             className={`
                                                 relative overflow-hidden rounded-lg p-2 border transition-all hover:-translate-y-0.5 hover:shadow-md
-                                                ${item.status === 'approved' ? 'bg-green-50/80 border-green-100 text-green-900' :
-                                                    item.status === 'pending_approval' ? 'bg-amber-50/80 border-amber-100 text-amber-900 dashed-border' :
-                                                        item.status === 'published' ? 'bg-gray-900 text-white border-gray-800' :
+                                                ${item.status === 'approved' ? 'bg-[#00838F]/10 border-[#00838F]/20 text-[#00838F]' :
+                                                    item.status === 'pending_approval' ? 'bg-[#F7931E]/10 border-[#F7931E]/30 text-[#F7931E] border-dashed' :
+                                                        item.status === 'published' ? 'bg-[#1A237E] text-white border-[#1A237E]' :
                                                             'bg-orange-50 border-orange-200 text-orange-900'
                                                 }
                                             `}
@@ -463,3 +463,4 @@ export default function PlannerPage() {
         </div>
     );
 }
+
