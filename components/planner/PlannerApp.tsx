@@ -102,7 +102,23 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                 supabase.from('PlannerMilestone').select('*'),
             ]);
             if (c.data) setClients(c.data);
-            if (i.data) setItems(i.data);
+            
+            let fetchedItems: PlannerItem[] = i.data || [];
+            // Regla de Auto-publicación: pasar de 'Programado' a 'Publicado' si fecha <= hoy
+            const today = todayStr();
+            const toAutoPublish = fetchedItems.filter(item => item.status === 'Programado' && item.date <= today);
+            if (toAutoPublish.length > 0) {
+                const autoIds = toAutoPublish.map(x => x.id);
+                fetchedItems = fetchedItems.map(item => autoIds.includes(item.id) ? { ...item, status: 'Publicado' } : item);
+                // Actualizar en segundo plano en Supabase
+                supabase.from('PlannerItem').update({ status: 'Publicado' }).in('id', autoIds).then(({ error }) => {
+                    if (!error) {
+                        showToast(`⚡ ${toAutoPublish.length} pieza(s) programada(s) actualizada(s) a Publicadas`);
+                    }
+                });
+            }
+            setItems(fetchedItems);
+
             if (r.data) setRules(r.data);
             if (t.data) setTasks(t.data);
             if (ms.data) setMilestones(ms.data);

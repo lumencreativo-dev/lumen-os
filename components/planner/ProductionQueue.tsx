@@ -136,12 +136,15 @@ export function ProductionQueue({
     const [filterStatus, setFilterStatus] = useState('');
     const [filterRange, setFilterRange] = useState('90'); // days from today. '' = no limit
     const [hidePast, setHidePast] = useState(false);
-    const [hidePublished, setHidePublished] = useState(false);
+    const [hidePublished, setHidePublished] = useState(true); // Oculto por defecto
+    const [onlyCreative, setOnlyCreative] = useState(false);
 
     // Date range limit
     const maxDate = filterRange ? addDays(today, Number(filterRange)) : null;
     // Past start: show up to 30 days ago
     const minDate = hidePast ? today : addDays(today, -30);
+
+    const CREATIVE_STATUSES = ['Idea', 'En diseno', 'Corregir', 'Por aprobar'];
 
     const filtered = useMemo(() => {
         return allClientsItems
@@ -149,13 +152,14 @@ export function ProductionQueue({
                 if (filterClient && item.client_id !== filterClient) return false;
                 if (filterFmt && item.fmt !== filterFmt) return false;
                 if (filterStatus && item.status !== filterStatus) return false;
+                if (onlyCreative && !CREATIVE_STATUSES.includes(item.status)) return false;
                 if (hidePublished && item.status === 'Publicado') return false;
                 if (item.date < minDate) return false;
                 if (maxDate && item.date > maxDate) return false;
                 return true;
             })
             .sort((a, b) => a.date.localeCompare(b.date));
-    }, [allClientsItems, filterClient, filterFmt, filterStatus, hidePublished, minDate, maxDate]);
+    }, [allClientsItems, filterClient, filterFmt, filterStatus, onlyCreative, hidePublished, minDate, maxDate]);
 
     // Group by date
     const grouped = useMemo(() => {
@@ -230,7 +234,19 @@ export function ProductionQueue({
                 />
 
                 {/* Toggles */}
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-2 ml-auto flex-wrap">
+                    <button
+                        onClick={() => setOnlyCreative(v => !v)}
+                        title="Filtrar solo lo que está en producción activa (Idea, Diseño, Corregir, Por aprobar)"
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-semibold transition-all ${
+                            onlyCreative
+                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                                : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
+                        }`}
+                    >
+                        <Zap className="w-3 h-3" />
+                        <span>Solo en producción</span>
+                    </button>
                     <button
                         onClick={() => setHidePast(v => !v)}
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-semibold transition-all ${
@@ -251,7 +267,7 @@ export function ProductionQueue({
                         }`}
                     >
                         {hidePublished ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        <span className="hidden sm:inline">Ocultar publicados</span>
+                        <span className="hidden sm:inline">{hidePublished ? 'Publicados ocultos' : 'Ver publicados'}</span>
                     </button>
                 </div>
             </div>
@@ -301,19 +317,23 @@ export function ProductionQueue({
 
                                 {/* Cards for this date */}
                                 <div className="space-y-2 pl-4">
-                                    {dateItems.map(item => {
-                                        const fmtStyle = FMT_STYLES[item.fmt] ?? FMT_STYLES['Post'];
-                                        const client = clients.find(c => c.id === item.client_id);
+                                    <AnimatePresence mode="popLayout">
+                                        {dateItems.map(item => {
+                                            const fmtStyle = FMT_STYLES[item.fmt] ?? FMT_STYLES['Post'];
+                                            const client = clients.find(c => c.id === item.client_id);
 
-                                        return (
-                                            <motion.div
-                                                key={item.id}
-                                                layout
-                                                onClick={() => onOpenCard(item)}
-                                                className={`group relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:border-white/20 hover:bg-white/[0.03] ${
-                                                    isPast ? 'opacity-60' : ''
-                                                } bg-[#141414] border-white/8`}
-                                            >
+                                            return (
+                                                <motion.div
+                                                    key={item.id}
+                                                    layout
+                                                    initial={{ opacity: 0, scale: 0.98 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                                                    onClick={() => onOpenCard(item)}
+                                                    className={`group relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:border-white/20 hover:bg-white/[0.03] ${
+                                                        isPast ? 'opacity-60' : ''
+                                                    } bg-[#141414] border-white/8`}
+                                                >
                                                 {/* Format dot + badge */}
                                                 <div className={`shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center text-[10px] font-black ${fmtStyle.bg} ${fmtStyle.border} ${fmtStyle.text}`}>
                                                     {item.fmt.slice(0, 2).toUpperCase()}
@@ -371,6 +391,7 @@ export function ProductionQueue({
                                             </motion.div>
                                         );
                                     })}
+                                    </AnimatePresence>
                                 </div>
                             </motion.div>
                         );

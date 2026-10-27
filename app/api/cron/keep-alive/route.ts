@@ -17,7 +17,7 @@ export async function GET() {
 
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        // Hacemos una consulta ligera a PlannerClient o Client para despertar y mantener activa la base de datos
+        // 1. Despertar la base de datos
         const { data, error } = await supabase
             .from('PlannerClient')
             .select('id')
@@ -34,12 +34,23 @@ export async function GET() {
             }
         }
 
+        // 2. Auto-publicar piezas en 'Programado' cuya fecha de publicación ya llegó o pasó
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { data: autoPublished, error: autoPubError } = await supabase
+            .from('PlannerItem')
+            .update({ status: 'Publicado' })
+            .eq('status', 'Programado')
+            .lte('date', todayStr)
+            .select('id');
+
         return NextResponse.json({
             success: true,
             status: 'active',
             message: 'Supabase keep-alive ping exitoso. Base de datos activa y protegida contra pausa.',
             timestamp: new Date().toISOString(),
-            recordsChecked: data?.length ?? 0
+            recordsChecked: data?.length ?? 0,
+            autoPublishedCount: autoPublished?.length ?? 0,
+            autoPubError: autoPubError?.message || null
         });
     } catch (err: any) {
         return NextResponse.json(
