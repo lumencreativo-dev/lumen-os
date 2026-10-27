@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useState, useEffect } from "react";
 import { Client } from "@/types/clients";
@@ -49,7 +49,7 @@ export function ClientBrief({ client }: { client: Client }) {
 
     const handleSave = async () => {
         if (!client?.id || client.id === 'demo') {
-            alert("Modo Demo: No se guardarán los datos.");
+            alert("Modo Demo: No se guardaran los datos.");
             return;
         }
         setSaving(true);
@@ -75,7 +75,7 @@ export function ClientBrief({ client }: { client: Client }) {
             } else {
                 await supabase.from("ClientIdentity").insert({ clientId: client.id, ...payload });
             }
-            alert("? ¡Brief guardado exitosamente!");
+            alert("Â¡Brief guardado exitosamente!");
         } catch (error) {
             console.error("Error saving brief", error);
         } finally {
@@ -95,7 +95,7 @@ export function ClientBrief({ client }: { client: Client }) {
                         Completar el Brief
                     </h2>
                     <p className="text-blue-100 text-sm leading-relaxed">
-                        Este espacio es vital para nosotros. No buscamos solo "gestionar redes", sino darle rostro digital a tu obra o marca. Tómate el tiempo necesario para responder; tus palabras son la semilla con la que trabajaremos tu contenido.
+                        Este espacio es vital para nosotros. No buscamos solo "gestionar redes", sino darle rostro digital a tu obra o marca. Tomate el tiempo necesario para responder; tus palabras son la semilla con la que trabajaremos tu contenido.
                     </p>
                 </div>
             </div>
@@ -103,40 +103,40 @@ export function ClientBrief({ client }: { client: Client }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Right Column - Briefing (takes 2 cols) */}
                 <div className="md:col-span-2 space-y-6">
-                    {/* SECTION 1: Identidad y Misión */}
+                    {/* SECTION 1: Identidad y Mision */}
                     <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
                         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
                             <Compass className="w-5 h-5 text-lumen-priority" />
-                            1. Identidad y Misión de la Obra
+                            1. Identidad y Mision de la Obra
                         </h3>
                         
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-900">¿Cuál es el origen y la historia de tu marca/institución?</label>
-                                <p className="text-xs text-gray-500 mb-2">Cuéntanos cómo nació, quiénes fueron los fundadores y qué los motivó a iniciar.</p>
+                                <label className="text-sm font-semibold text-gray-900">Â¿Cual es el origen y la historia de tu marca/institucion?</label>
+                                <p className="text-xs text-gray-500 mb-2">Cuentanos como nacio, quienes fueron los fundadores y que los motivo a iniciar.</p>
                                 <textarea
-                                    value={identity.foundersQuote}
+                                    value={identity.foundersQuote || ""}
                                     onChange={(e) => setIdentity({...identity, foundersQuote: e.target.value})}
-                                    placeholder="Hace X años comenzamos porque..."
+                                    placeholder="Hace X aÃ±os comenzamos porque..."
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm text-sm"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-900">¿Cuál es la misión principal que guía su labor?</label>
-                                <p className="text-xs text-gray-500 mb-2">Más allá de ganar dinero, ¿qué impacto buscan tener en la sociedad?</p>
+                                <label className="text-sm font-semibold text-gray-900">Â¿Cual es la mision principal que guia su labor?</label>
+                                <p className="text-xs text-gray-500 mb-2">Mas alla de ganar dinero, Â¿que impacto buscan tener en la sociedad?</p>
                                 <textarea
-                                    value={identity.purpose}
+                                    value={identity.purpose || ""}
                                     onChange={(e) => setIdentity({...identity, purpose: e.target.value})}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm text-sm"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-900">¿Qué valores fundamentales desean reflejar en redes?</label>
-                                <p className="text-xs text-gray-500 mb-2">Ejemplo: Caridad, fe, servicio, innovación, lujo, cercanía, fraternidad...</p>
+                                <label className="text-sm font-semibold text-gray-900">Â¿Que valores fundamentales desean reflejar en redes?</label>
+                                <p className="text-xs text-gray-500 mb-2">Ejemplo: Caridad, fe, servicio, innovacion, lujo, cercania, fraternidad...</p>
                                 <textarea
-                                    value={identity.toneOfVoice}
+                                    value={identity.toneOfVoice || ""}
                                     onChange={(e) => setIdentity({...identity, toneOfVoice: e.target.value})}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[80px] resize-none shadow-sm text-sm"
                                 />
@@ -153,20 +153,20 @@ export function ClientBrief({ client }: { client: Client }) {
 
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-900">¿Qué aspectos de la vida cotidiana quisieran mostrar en redes?</label>
-                                <p className="text-xs text-gray-500 mb-2">El detrás de escena, rostros felices de clientes, actividades recreativas, celebraciones...</p>
+                                <label className="text-sm font-semibold text-gray-900">Â¿Que aspectos de la vida cotidiana quisieran mostrar en redes?</label>
+                                <p className="text-xs text-gray-500 mb-2">El detras de escena, rostros felices de clientes, actividades recreativas, celebraciones...</p>
                                 <textarea
-                                    value={identity.constraints}
+                                    value={identity.constraints || ""}
                                     onChange={(e) => setIdentity({...identity, constraints: e.target.value})}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm text-sm"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-900">¿A quiénes queremos llegar con las redes sociales?</label>
-                                <p className="text-xs text-gray-500 mb-2">Familiares, jóvenes voluntarios, benefactores, empresas corporativas, clientes B2B...</p>
+                                <label className="text-sm font-semibold text-gray-900">Â¿A quienes queremos llegar con las redes sociales?</label>
+                                <p className="text-xs text-gray-500 mb-2">Familiares, jovenes voluntarios, benefactores, empresas corporativas, clientes B2B...</p>
                                 <textarea
-                                    value={identity.targetAudience}
+                                    value={identity.targetAudience || ""}
                                     onChange={(e) => setIdentity({...identity, targetAudience: e.target.value})}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm text-sm"
                                 />
@@ -178,14 +178,14 @@ export function ClientBrief({ client }: { client: Client }) {
                     <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
                         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
                             <TrendingUp className="w-5 h-5 text-[#F7931E]" />
-                            3. Sueños y Expectativas
+                            3. SueÃ±os y Expectativas
                         </h3>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-900">¿Qué tendría que suceder en los próximos 3 meses para que digas: "Valió la pena trabajar con Lumen"?</label>
-                            <p className="text-xs text-gray-500 mb-2">Más seguidores, nuevas alianzas, más donaciones/ventas, mayor difusión...</p>
+                            <label className="text-sm font-semibold text-gray-900">Â¿Que tendria que suceder en los proximos 3 meses para que digas: "Valio la pena trabajar con Lumen"?</label>
+                            <p className="text-xs text-gray-500 mb-2">Mas seguidores, nuevas alianzas, mas donaciones/ventas, mayor difusion...</p>
                             <textarea
-                                value={identity.postingFrequency}
+                                value={identity.postingFrequency || ""}
                                 onChange={(e) => setIdentity({...identity, postingFrequency: e.target.value})}
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all min-h-[100px] resize-none shadow-sm text-sm"
                             />
@@ -204,7 +204,7 @@ export function ClientBrief({ client }: { client: Client }) {
                         <div className="space-y-6">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Link a Drive / Assets</label>
-                                <p className="text-[10px] text-gray-400 mb-2">Pega aquí el enlace (Google Drive o Canva) con tu logo y fotos. Si no tienes, envíalas por WhatsApp.</p>
+                                <p className="text-[10px] text-gray-400 mb-2">Pega aqui el enlace (Google Drive o Canva) con tu logo y fotos. Si no tienes, envialas por WhatsApp.</p>
                                 <input type="url" value={social.driveLink} onChange={e => setSocial({...social, driveLink: e.target.value})} placeholder="https://drive.google.com/..." className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-lumen-priority focus:ring-2 focus:ring-lumen-priority/20 outline-none transition-all shadow-sm bg-gray-50/50 text-sm" />
                             </div>
 
@@ -216,9 +216,9 @@ export function ClientBrief({ client }: { client: Client }) {
                                     <input type="text" value={social.instagram} onChange={e => setSocial({...social, instagram: e.target.value})} placeholder="@tu_cuenta" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-lumen-priority outline-none transition-all shadow-sm bg-gray-50/50 text-sm" />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Contraseña</label>
-                                    <input type="password" value={social.password} onChange={e => setSocial({...social, password: e.target.value})} placeholder="••••••••" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-lumen-priority outline-none transition-all shadow-sm bg-gray-50/50 text-sm" />
-                                    <p className="text-[10px] text-gray-400">Esta información se cifra de forma segura.</p>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">ContraseÃ±a</label>
+                                    <input type="password" value={social.password} onChange={e => setSocial({...social, password: e.target.value})} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-lumen-priority outline-none transition-all shadow-sm bg-gray-50/50 text-sm" />
+                                    <p className="text-[10px] text-gray-400">Esta informacion se cifra de forma segura.</p>
                                 </div>
                             </div>
 
