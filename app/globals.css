@@ -45,6 +45,19 @@
 /* ===== BASE ===== */
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+/* Soporte de tema oscuro nativo para controles de formulario (select, option, datepicker) */
+select,
+option {
+  color-scheme: dark;
+  background-color: #1c1c1c;
+  color: #ffffff;
+}
+
+input[type="date"] {
+  color-scheme: dark;
 }
 
 /* ===== LIGHT MODE REFINEMENT ===== */

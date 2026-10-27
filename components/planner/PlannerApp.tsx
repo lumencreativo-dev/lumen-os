@@ -48,6 +48,12 @@ const FMTS = [
     { name: 'Historia', color: '#F7931E' },
     { name: 'Reel',     color: '#C2185B' },
 ];
+const FMT_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+    'Post':     { bg: 'bg-blue-900/40',   border: 'border-blue-400/50',  text: 'text-blue-100',  dot: '#60A5FA' },
+    'Carrusel': { bg: 'bg-teal-900/40',   border: 'border-teal-400/50',  text: 'text-teal-100',  dot: '#2DD4BF' },
+    'Historia': { bg: 'bg-amber-900/40',  border: 'border-amber-400/50', text: 'text-amber-100', dot: '#FBBF24' },
+    'Reel':     { bg: 'bg-pink-900/40',   border: 'border-pink-400/50',  text: 'text-pink-100',  dot: '#F472B6' },
+};
 const STATUSES = ['Idea','En diseno','Por aprobar','Aprobado','Programado','Publicado','Corregir'];
 const STATUS_COLORS: Record<string, string> = {
     'Idea': '#9E9E9E', 'En diseno': '#1A237E', 'Por aprobar': '#F7931E',
@@ -781,20 +787,20 @@ function MonthCard({ month, m, year, items, counts, milestoneOnFn, onClick }: an
     const td          = todayStr();
 
     return (
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-4 hover:border-white/20 hover:bg-white/5 transition-all cursor-pointer group" onClick={onClick}>
+        <div className="bg-[#161616] border border-white/10 rounded-2xl p-4 hover:border-white/30 hover:bg-[#1E1E1E] transition-all cursor-pointer group shadow-sm" onClick={onClick}>
             <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-white text-sm group-hover:text-[#F7931E] transition-colors">{month}</h3>
                 <div className="flex gap-1.5">
                     {FMTS.map(f => counts[f.name] > 0 && (
                         <div key={f.name} className="flex items-center gap-0.5">
                             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: f.color }} />
-                            <span className="text-white/40 text-[10px]">{counts[f.name]}</span>
+                            <span className="text-white/60 font-semibold text-[10px]">{counts[f.name]}</span>
                         </div>
                     ))}
                 </div>
             </div>
             <div className="grid grid-cols-7 gap-0.5">
-                {DAYS_SHORT.map(d => <div key={d} className="text-center text-white/20 text-[9px] pb-1">{d}</div>)}
+                {DAYS_SHORT.map(d => <div key={d} className="text-center text-white/50 text-[10px] font-bold pb-1">{d}</div>)}
                 {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} />)}
                 {Array.from({ length: daysInMonth }, (_, i) => {
                     const d       = i + 1;
@@ -803,8 +809,10 @@ function MonthCard({ month, m, year, items, counts, milestoneOnFn, onClick }: an
                     const mss     = milestoneOnFn(dateStr);
                     const isToday = dateStr === td;
                     return (
-                        <div key={d} className={`aspect-square rounded-sm flex flex-col items-center justify-center relative ${isToday ? 'bg-[#F7931E]/20 ring-1 ring-[#F7931E]/40' : ''}`}>
-                            <span className={`text-[9px] leading-none ${isToday ? 'text-[#F7931E] font-bold' : 'text-white/30'}`}>{d}</span>
+                        <div key={d} className={`aspect-square rounded-sm flex flex-col items-center justify-center relative ${
+                            isToday ? 'bg-[#F7931E]/25 ring-1 ring-[#F7931E]' : ''
+                        }`}>
+                            <span className={`text-[10px] leading-none ${isToday ? 'text-[#F7931E] font-black' : 'text-white/60'}`}>{d}</span>
                             {dayItems.length > 0 && (
                                 <div className="flex flex-wrap gap-0.5 justify-center mt-0.5">
                                     {dayItems.slice(0,3).map((it: PlannerItem, idx: number) => (
@@ -812,7 +820,7 @@ function MonthCard({ month, m, year, items, counts, milestoneOnFn, onClick }: an
                                     ))}
                                 </div>
                             )}
-                            {mss.length > 0 && <div className="absolute top-0 right-0 w-1 h-1 rounded-full bg-yellow-400" />}
+                            {mss.length > 0 && <div className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-amber-400 ring-1 ring-black" />}
                         </div>
                     );
                 })}
@@ -857,14 +865,14 @@ function MonthView({ mode, year, mon, setMon, allItems, milestoneOnFn, dlgDate, 
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-2 mb-2">
-                {['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo'].map(d => (
-                    <div key={d} className="text-center text-white/30 text-xs font-semibold py-1">{d}</div>
+            <div className="grid grid-cols-7 gap-2.5 mb-2.5">
+                {['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map(d => (
+                    <div key={d} className="text-center text-white/80 text-xs md:text-sm font-bold uppercase tracking-wider py-1.5">{d}</div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-2">
-                {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="min-h-[90px]" />)}
+            <div className="grid grid-cols-7 gap-2.5">
+                {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="min-h-[110px] md:min-h-[130px]" />)}
                 {Array.from({ length: daysInMonth }, (_, i) => {
                     const d       = i + 1;
                     const dateStr = `${year}-${pad(mon+1)}-${pad(d)}`;
@@ -873,22 +881,49 @@ function MonthView({ mode, year, mon, setMon, allItems, milestoneOnFn, dlgDate, 
                     const isToday = dateStr === td;
                     return (
                         <button key={d} onClick={() => setDlgDate(dateStr)}
-                            className={`min-h-[90px] md:min-h-[110px] rounded-xl p-2 text-left border transition-all hover:border-white/20 hover:bg-white/5 group ${
-                                isToday ? 'border-[#F7931E]/40 bg-[#F7931E]/5' : 'border-white/5 bg-white/2'
+                            className={`min-h-[110px] md:min-h-[130px] rounded-2xl p-2.5 text-left border transition-all hover:border-white/30 hover:bg-[#1C1C1C] group flex flex-col justify-between ${
+                                isToday
+                                    ? 'border-[#F7931E] bg-[#F7931E]/15 ring-2 ring-[#F7931E]/30 shadow-lg shadow-[#F7931E]/10'
+                                    : 'border-white/10 bg-[#161616]'
                             }`}>
-                            <div className={`text-sm font-bold mb-1 ${isToday ? 'text-[#F7931E]' : 'text-white/60 group-hover:text-white'}`}>{d}</div>
-                            {mss.map((ms: PlannerMilestone) => (
-                                <div key={ms.id} className="text-[10px] bg-yellow-400/15 text-yellow-300 rounded px-1 py-0.5 mb-0.5 truncate">
-                                    {ms.emoji} {ms.title}
+                            <div className="w-full">
+                                <div className={`text-base font-black mb-1.5 flex items-center justify-between ${
+                                    isToday ? 'text-[#F7931E]' : 'text-white group-hover:text-[#F7931E] transition-colors'
+                                }`}>
+                                    <span>{d}</span>
+                                    {isToday && (
+                                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-[#F7931E] text-black uppercase tracking-wider">
+                                            Hoy
+                                        </span>
+                                    )}
                                 </div>
-                            ))}
-                            {dayItems.slice(0,3).map((it: PlannerItem) => (
-                                <div key={it.id} className="text-[10px] rounded px-1 py-0.5 mb-0.5 truncate"
-                                    style={{ backgroundColor: `${fmtColor(it.fmt)}20`, color: fmtColor(it.fmt) }}>
-                                    {it.rule ? '↻ ' : ''}{it.title || it.fmt}
+
+                                {mss.map((ms: PlannerMilestone) => (
+                                    <div key={ms.id} className="text-xs bg-amber-500/20 border border-amber-500/40 text-amber-200 rounded-lg px-2 py-1 mb-1.5 font-bold flex items-center gap-1.5 shadow-sm truncate">
+                                        <span className="shrink-0">{ms.emoji && ms.emoji.length <= 2 ? ms.emoji : '⭐'}</span>
+                                        <span className="truncate">{ms.title}</span>
+                                    </div>
+                                ))}
+
+                                {dayItems.slice(0, 3).map((it: PlannerItem) => {
+                                    const st = FMT_STYLES[it.fmt] || { bg: 'bg-white/10', border: 'border-white/20', text: 'text-white', dot: '#FFFFFF' };
+                                    return (
+                                        <div key={it.id}
+                                            className={`text-xs rounded-lg px-2 py-1 mb-1 border font-semibold flex items-center gap-1.5 shadow-sm truncate ${st.bg} ${st.border} ${st.text}`}>
+                                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: st.dot }} />
+                                            <span className="truncate">
+                                                {it.rule ? '↻ ' : ''}{it.title || it.fmt}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {dayItems.length > 3 && (
+                                <div className="text-xs font-bold text-[#F7931E] mt-1">
+                                    +{dayItems.length - 3} más
                                 </div>
-                            ))}
-                            {dayItems.length > 3 && <div className="text-[10px] text-white/30">+{dayItems.length - 3} mas</div>}
+                            )}
                         </button>
                     );
                 })}
@@ -961,25 +996,25 @@ function DayDialog({ mode, date, items, milestones, fichaItem, setFichaItem, onC
 
                             {/* Add content (admin only) */}
                             {mode === 'admin' && (
-                                <div className="pt-3 border-t border-white/5">
-                                    <div className="flex flex-wrap gap-2 items-center">
-                                        <button onClick={() => onAdd(date)}
-                                            className="flex items-center gap-1.5 bg-[#F7931E] hover:bg-[#F7931E]/90 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all">
-                                            <Plus className="w-3 h-3" /> Anadir contenido
-                                        </button>
-                                        <select value={freq} onChange={e => setFreq(e.target.value)}
-                                            className="bg-white/5 border border-white/10 text-white/60 text-xs rounded-lg px-2 py-2 outline-none">
-                                            <option value="">No se repite</option>
-                                            <option value="w">Cada semana</option>
-                                            <option value="m">Cada mes</option>
-                                            <option value="y">Cada ano</option>
+                                <div className="pt-4 border-t border-white/10">
+                                    <div className="flex flex-wrap gap-2.5 items-center">
+                                        <select
+                                            value={freq}
+                                            onChange={e => setFreq(e.target.value)}
+                                            className="bg-[#1C1C1C] border border-white/20 text-white font-medium text-xs rounded-xl px-3 py-2.5 outline-none [color-scheme:dark] [&>option]:bg-[#1C1C1C] [&>option]:text-white cursor-pointer hover:border-white/40 transition-colors">
+                                            <option value="">No se repite (Único)</option>
+                                            <option value="w">Repetir cada semana</option>
+                                            <option value="m">Repetir cada mes</option>
+                                            <option value="y">Repetir cada año</option>
                                         </select>
-                                        {freq && (
-                                            <button onClick={() => { onAdd(date, freq); setFreq(''); }}
-                                                className="flex items-center gap-1 bg-white/5 border border-white/10 text-white/60 hover:text-white text-xs px-3 py-2 rounded-lg transition-all">
-                                                <Repeat className="w-3 h-3" /> Agregar recurrente
-                                            </button>
-                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => onAdd(date, freq || undefined)}
+                                            className="flex items-center gap-2 bg-[#F7931E] hover:bg-[#F7931E]/90 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-[#F7931E]/20">
+                                            <Plus className="w-4 h-4" />
+                                            {freq ? 'Añadir contenido (Recurrente)' : 'Añadir contenido'}
+                                        </button>
                                     </div>
                                 </div>
                             )}
@@ -1002,56 +1037,56 @@ function ContentRowQuick({ item, mode, onUpdate, onDelete, onOpenFicha }: any) {
     ].filter(Boolean).join(' · ');
 
     return (
-        <div className="rounded-xl border transition-all" style={{ borderColor: `${color}30`, backgroundColor: `${color}08` }}>
+        <div className="rounded-xl border transition-all" style={{ borderColor: `${color}40`, backgroundColor: `${color}12` }}>
             {/* Quick row */}
             <div className="flex items-start gap-3 p-3">
-                <div className="w-1 self-stretch rounded-full shrink-0 mt-1" style={{ backgroundColor: color }} />
-                <div className="flex-1 min-w-0 space-y-1">
+                <div className="w-1.5 self-stretch rounded-full shrink-0 mt-1" style={{ backgroundColor: color }} />
+                <div className="flex-1 min-w-0 space-y-1.5">
                     <div className="flex gap-2 flex-wrap">
                         {mode === 'admin' ? (
                             <input value={item.title} onChange={e => onUpdate(item.id, { title: e.target.value }, item.rule)}
-                                placeholder="Titulo / tema..."
-                                className="flex-1 min-w-0 bg-transparent text-white text-sm font-semibold outline-none placeholder-white/20" />
+                                placeholder="Título / tema..."
+                                className="flex-1 min-w-0 bg-transparent text-white text-sm font-bold outline-none placeholder-white/30" />
                         ) : (
-                            <span className="text-white text-sm font-semibold flex-1 truncate">{item.title || item.fmt}</span>
+                            <span className="text-white text-sm font-bold flex-1 truncate">{item.title || item.fmt}</span>
                         )}
                     </div>
                     <div className="flex flex-wrap gap-2 items-center">
                         {mode === 'admin' ? (
                             <select value={item.fmt} onChange={e => onUpdate(item.id, { fmt: e.target.value }, item.rule)}
-                                className="bg-transparent text-[10px] font-semibold outline-none border-none"
+                                className="bg-[#1C1C1C] border border-white/20 text-xs font-semibold rounded-lg px-2.5 py-1 outline-none [color-scheme:dark] [&>option]:bg-[#1C1C1C] [&>option]:text-white cursor-pointer"
                                 style={{ color }}>
-                                {FMTS.map(f => <option key={f.name}>{f.name}</option>)}
+                                {FMTS.map(f => <option key={f.name} value={f.name} className="bg-[#1C1C1C] text-white">{f.name}</option>)}
                             </select>
                         ) : (
-                            <span className="text-[10px] font-semibold" style={{ color }}>{item.fmt}</span>
+                            <span className="text-xs font-semibold" style={{ color }}>{item.fmt}</span>
                         )}
-                        {item.rule && <span className="text-[10px] text-white/30">↻</span>}
+                        {item.rule && <span className="text-xs text-white/50 font-bold">↻ Recurrente</span>}
                         {mode === 'admin' ? (
                             <select value={item.status} onChange={e => onUpdate(item.id, { status: e.target.value }, item.rule)}
-                                className="bg-white/5 border border-white/10 text-[10px] rounded-full px-2 py-0.5 outline-none"
+                                className="bg-[#1C1C1C] border border-white/20 text-xs rounded-lg px-2.5 py-1 outline-none font-semibold [color-scheme:dark] [&>option]:bg-[#1C1C1C] [&>option]:text-white cursor-pointer"
                                 style={{ color: STATUS_COLORS[item.status] || '#9E9E9E' }}>
-                                {STATUSES.map(s => <option key={s}>{s}</option>)}
+                                {STATUSES.map(s => <option key={s} value={s} className="bg-[#1C1C1C] text-white">{s}</option>)}
                             </select>
                         ) : (
-                            <span className="text-[10px] rounded-full px-1.5 py-0.5 font-medium"
-                                style={{ backgroundColor: `${STATUS_COLORS[item.status] || '#9E9E9E'}20`, color: STATUS_COLORS[item.status] || '#9E9E9E' }}>
+                            <span className="text-xs rounded-full px-2 py-0.5 font-bold"
+                                style={{ backgroundColor: `${STATUS_COLORS[item.status] || '#9E9E9E'}25`, color: STATUS_COLORS[item.status] || '#9E9E9E' }}>
                                 {item.status}
                             </span>
                         )}
                     </div>
                     {/* Summary + button */}
                     <div className="flex items-center gap-2 pt-1">
-                        {summary && <span className="text-white/25 text-[10px] flex-1 truncate">{summary}</span>}
+                        {summary && <span className="text-white/60 text-xs font-medium flex-1 truncate">{summary}</span>}
                         <button onClick={onOpenFicha}
-                            className="shrink-0 text-[10px] text-[#F7931E]/70 hover:text-[#F7931E] font-semibold transition-all whitespace-nowrap">
+                            className="shrink-0 text-xs text-[#F7931E] hover:text-[#F7931E]/80 font-bold transition-all whitespace-nowrap flex items-center gap-1">
                             Ver ficha completa →
                         </button>
                     </div>
                 </div>
                 {mode === 'admin' && (
-                    <button onClick={() => onDelete(item.id, item.rule)} className="text-white/20 hover:text-red-400 p-1 shrink-0 transition-all">
-                        <X className="w-3.5 h-3.5" />
+                    <button onClick={() => onDelete(item.id, item.rule)} className="text-white/30 hover:text-red-400 p-1.5 shrink-0 transition-all rounded-lg hover:bg-white/5">
+                        <X className="w-4 h-4" />
                     </button>
                 )}
             </div>
@@ -1119,16 +1154,16 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
                         <label className="text-white/40 text-xs font-semibold">Formato</label>
                         <select value={item.fmt} onChange={e => field('fmt', e.target.value)}
                             disabled={mode === 'client'}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E]/50 disabled:opacity-50">
-                            {FMTS.map(f => <option key={f.name}>{f.name}</option>)}
+                            className="w-full bg-[#1C1C1C] border border-white/20 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E]/50 disabled:opacity-50 [color-scheme:dark] [&>option]:bg-[#1C1C1C] [&>option]:text-white cursor-pointer">
+                            {FMTS.map(f => <option key={f.name} value={f.name} className="bg-[#1C1C1C] text-white">{f.name}</option>)}
                         </select>
                     </div>
                     <div className="space-y-1">
                         <label className="text-white/40 text-xs font-semibold">Estado</label>
                         <select value={item.status} onChange={e => field('status', e.target.value)}
                             disabled={mode === 'client'}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E]/50 disabled:opacity-50">
-                            {STATUSES.map(s => <option key={s}>{s}</option>)}
+                            className="w-full bg-[#1C1C1C] border border-white/20 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E]/50 disabled:opacity-50 [color-scheme:dark] [&>option]:bg-[#1C1C1C] [&>option]:text-white cursor-pointer">
+                            {STATUSES.map(s => <option key={s} value={s} className="bg-[#1C1C1C] text-white">{s}</option>)}
                         </select>
                     </div>
 
@@ -1289,46 +1324,75 @@ function TasksView({ tasks, year, mon, onAdd, onUpdate, onDelete }: any) {
             <div className="flex items-center gap-3 mb-6">
                 <h2 className="font-black text-white text-xl">Tareas</h2>
                 <select value={selMon} onChange={e => setSelMon(+e.target.value)}
-                    className="bg-white/5 border border-white/10 text-white/70 text-sm rounded-lg px-3 py-1.5 outline-none ml-auto">
-                    {MONTHS.map((m, i) => <option key={i} value={i}>{m} {year}</option>)}
+                    className="bg-[#1C1C1C] border border-white/20 text-white font-bold text-sm rounded-xl px-4 py-2 outline-none [color-scheme:dark] [&>option]:bg-[#1C1C1C] [&>option]:text-white cursor-pointer ml-auto shadow-md hover:border-white/40 transition-colors">
+                    {MONTHS.map((m, i) => (
+                        <option key={i} value={i} className="bg-[#1C1C1C] text-white py-1">
+                            {m} {year}
+                        </option>
+                    ))}
                 </select>
             </div>
-            <div className="flex flex-wrap gap-2 mb-6 bg-white/3 border border-white/8 rounded-xl p-3">
+            <div className="flex flex-wrap gap-2.5 mb-6 bg-[#161616] border border-white/10 rounded-2xl p-3 shadow-sm">
                 <input value={text} onChange={e => setText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { onAdd(text, prio, date); setText(''); setDate(''); }}}
-                    placeholder="Nueva tarea..."
-                    className="flex-1 min-w-[160px] bg-transparent text-white text-sm outline-none placeholder-white/20" />
+                    placeholder="Escribe una nueva tarea..."
+                    className="flex-1 min-w-[180px] bg-transparent text-white text-sm outline-none placeholder-white/30 px-2 font-medium" />
                 <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                    className="bg-white/5 border border-white/10 text-white/50 text-xs rounded-lg px-2 py-1.5 outline-none" />
+                    className="bg-[#1C1C1C] border border-white/20 text-white text-xs font-medium rounded-xl px-3 py-2 outline-none [color-scheme:dark]" />
                 <select value={prio} onChange={e => setPrio(+e.target.value)}
-                    className="bg-white/5 border border-white/10 text-white/50 text-xs rounded-lg px-2 py-1.5 outline-none">
-                    {PRIORITIES.map((p, i) => <option key={i} value={i+1}>{p.label}</option>)}
+                    className="bg-[#1C1C1C] border border-white/20 text-white text-xs font-semibold rounded-xl px-3 py-2 outline-none [color-scheme:dark] [&>option]:bg-[#1C1C1C] [&>option]:text-white cursor-pointer">
+                    {PRIORITIES.map((p, i) => (
+                        <option key={i} value={i+1} className="bg-[#1C1C1C] text-white">Prioridad {p.label}</option>
+                    ))}
                 </select>
                 <button onClick={() => { onAdd(text, prio, date); setText(''); setDate(''); }}
-                    className="bg-[#F7931E] text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
-                    <Plus className="w-3.5 h-3.5" />
+                    className="bg-[#F7931E] hover:bg-[#F7931E]/90 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-[#F7931E]/20 flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5" /> Añadir
                 </button>
             </div>
             {monthTasks.length === 0 ? (
-                <div className="text-center py-12 text-white/30">
-                    <CheckSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                    <p>Sin tareas para {MONTHS[selMon]}.</p>
+                <div className="text-center py-12 text-white/30 bg-[#161616]/50 rounded-2xl border border-white/5">
+                    <CheckSquare className="w-10 h-10 mx-auto mb-3 opacity-30 text-[#F7931E]" />
+                    <p className="text-sm font-medium">Sin tareas pendientes para {MONTHS[selMon]}.</p>
                 </div>
             ) : (
                 <div className="space-y-2">
-                    {monthTasks.map((t: PlannerTask) => (
-                        <div key={t.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${t.done ? 'opacity-40' : ''}`}
-                            style={{ borderColor: `${PRIORITIES[(t.prio||2)-1].color}30`, borderLeftColor: PRIORITIES[(t.prio||2)-1].color, borderLeftWidth: 3 }}>
-                            <input type="checkbox" checked={t.done} onChange={e => onUpdate(t.id, { done: e.target.checked })}
-                                className="w-4 h-4 rounded accent-[#F7931E]" />
-                            <input value={t.text} onChange={e => onUpdate(t.id, { text: e.target.value })}
-                                className={`flex-1 bg-transparent text-sm text-white outline-none ${t.done ? 'line-through text-white/40' : ''}`} />
-                            {t.date && <span className={`text-xs ${t.date < td && !t.done ? 'text-red-400' : 'text-white/30'}`}>{t.date}</span>}
-                            <button onClick={() => onDelete(t.id)} className="text-white/20 hover:text-red-400 p-1 transition-all">
-                                <X className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                    ))}
+                    {monthTasks.map((t: PlannerTask) => {
+                        const prioObj = PRIORITIES[(t.prio || 2) - 1] || PRIORITIES[1];
+                        return (
+                            <div key={t.id} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
+                                t.done ? 'opacity-40 bg-[#141414]' : 'bg-[#181818] hover:bg-[#1E1E1E]'
+                            }`}
+                                style={{ borderColor: `${prioObj.color}35`, borderLeftColor: prioObj.color, borderLeftWidth: 4 }}>
+                                <input type="checkbox" checked={t.done} onChange={e => onUpdate(t.id, { done: e.target.checked })}
+                                    className="w-4 h-4 rounded accent-[#F7931E] cursor-pointer shrink-0" />
+                                <input value={t.text} onChange={e => onUpdate(t.id, { text: e.target.value })}
+                                    className={`flex-1 bg-transparent text-sm text-white font-medium outline-none ${t.done ? 'line-through text-white/40' : ''}`} />
+                                
+                                {/* Badge explícito de prioridad: Alta / Media / Baja */}
+                                <span
+                                    className="text-[11px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider shrink-0"
+                                    style={{
+                                        backgroundColor: `${prioObj.color}20`,
+                                        color: prioObj.color,
+                                        border: `1px solid ${prioObj.color}50`
+                                    }}>
+                                    {prioObj.label}
+                                </span>
+
+                                {t.date && (
+                                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md bg-white/5 shrink-0 ${
+                                        t.date < td && !t.done ? 'text-red-400 font-bold border border-red-500/30' : 'text-white/50'
+                                    }`}>
+                                        {t.date}
+                                    </span>
+                                )}
+                                <button onClick={() => onDelete(t.id)} className="text-white/30 hover:text-red-400 p-1.5 transition-all rounded-lg hover:bg-white/5 shrink-0">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
