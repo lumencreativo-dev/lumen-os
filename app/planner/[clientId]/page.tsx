@@ -1,9 +1,11 @@
-// app/planner/[clientId]/page.tsx
-// Vista de Cliente — solo ve SU calendario, sin panel de admin
 'use client';
 
+import { useParams } from 'next/navigation';
 import { PlannerApp } from '@/components/planner/PlannerApp';
 
-export default function ClientPlannerPage({ params }: { params: { clientId: string } }) {
-    return <PlannerApp mode="client" clientId={params.clientId} />;
+export default function ClientPlannerPage() {
+    const params = useParams();
+    const clientId = params?.clientId as string;
+    return <PlannerApp mode="client" clientId={clientId} />;
 }
+

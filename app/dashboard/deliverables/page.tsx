@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { deliverableService } from "@/lib/deliverables";
 import { clientService } from "@/lib/clients";
-import { Deliverable, DeliverableType, DeliverablePriority } from "@/types/deliverables";
+import { Deliverable, DeliverableType, DeliverablePriority, DeliverableStatus } from "@/types/deliverables";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ApprovalStats } from "@/components/portal/ApprovalStats";
