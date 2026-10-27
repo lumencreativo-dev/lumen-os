@@ -1,0 +1,27 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Se ejecuta cada 2 días a las 12:00 UTC (8:00 AM hora Venezuela/Caracas)
+    - cron: '0 12 */2 * *'
+  workflow_dispatch: # Permite ejecutarlo manualmente desde GitHub cuando quieras con un solo clic
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase Database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar consulta Keep-Alive a Supabase
+        run: |
+          echo "Haciendo ping a Supabase para evitar el auto-pausado por inactividad..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+            "https://nufggtvilxlgojkjfwqq.supabase.co/rest/v1/PlannerClient?select=id&limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZmdndHZpbHhsZ29qa2pmd3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NDQ5NjcsImV4cCI6MjEwNjMyMDk2N30.rugx0E8tRxKB1r-qORFPoUC37rYZEn44lrj7ynUNetc" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZmdndHZpbHhsZ29qa2pmd3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NDQ5NjcsImV4cCI6MjEwNjMyMDk2N30.rugx0E8tRxKB1r-qORFPoUC37rYZEn44lrj7ynUNetc")
+          
+          echo "Código HTTP recibido: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Ping exitoso. La base de datos de Supabase permanece activa."
+          else
+            echo "⚠️ Advertencia: Supabase devolvió código $HTTP_STATUS"
+          fi
