@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Plus, Upload, Download, Check, Users } from 'lucide-react';
+import { X, Calendar, Plus, Upload, Download, Check, Users, ListOrdered } from 'lucide-react';
 import { PlannerClient } from './types';
 
 interface MobileDrawerProps {
@@ -10,8 +10,9 @@ interface MobileDrawerProps {
     onClose: () => void;
     clients: PlannerClient[];
     curClient: string | null;
-    screen: 'home' | 'calendar';
+    screen: 'home' | 'calendar' | 'queue';
     onGoHome: () => void;
+    onGoQueue: () => void;
     onSelectClient: (clientId: string) => void;
     onAddClient: (name: string) => void;
     onExportAll: () => void;
@@ -25,6 +26,7 @@ export function MobileDrawer({
     curClient,
     screen,
     onGoHome,
+    onGoQueue,
     onSelectClient,
     onAddClient,
     onExportAll,
@@ -84,7 +86,21 @@ export function MobileDrawer({
                                 }`}
                             >
                                 <span className="text-base">⌂</span>
-                                <span>Inicio (Todos los clientes)</span>
+                                <span>Inicio (Clientes)</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    onGoQueue();
+                                    onClose();
+                                }}
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                                    screen === 'queue'
+                                        ? 'bg-[#F7931E] text-white shadow-lg shadow-[#F7931E]/20'
+                                        : 'text-white/70 hover:bg-white/5'
+                                }`}
+                            >
+                                <ListOrdered className="w-4 h-4" />
+                                <span>Cola de Producción</span>
                             </button>
                         </div>
 

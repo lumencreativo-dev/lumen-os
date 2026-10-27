@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,7 +8,8 @@ import {
     Check, Star, Repeat, Trash2, Loader2, ExternalLink,
     LayoutGrid, CheckSquare, ArrowLeft, Clock, User,
     Target, Hash, MousePointer, Eye, Link, FileText, Instagram,
-    Download, Upload, Menu, Search, Command, Kanban as KanbanIcon
+    Download, Upload, Menu, Search, Command, Kanban as KanbanIcon,
+    ListOrdered
 } from 'lucide-react';
 
 import { PlannerClient, PlannerItem, PlannerRule, PlannerTask, PlannerMilestone } from './types';
@@ -21,6 +22,7 @@ import { MonthCard } from './MonthCard';
 import { KanbanView } from './KanbanView';
 import { TasksView } from './TasksView';
 import { MilestonesView } from './MilestonesView';
+import { ProductionQueue } from './ProductionQueue';
 import { QuickSearchModal } from './QuickSearchModal';
 import { MobileDrawer } from './MobileDrawer';
 import { ConfirmModal } from './ConfirmModal';
@@ -43,11 +45,11 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
     const [milestones, setMilestones] = useState<PlannerMilestone[]>([]);
 
     // ── Navigation state ──
-    const [screen, setScreen] = useState<'home' | 'calendar'>(fixedClientId ? 'calendar' : 'home');
+    const [screen, setScreen] = useState<'home' | 'calendar' | 'queue'>(fixedClientId ? 'calendar' : 'home');
     const [curClient, setCurClient] = useState<string | null>(fixedClientId ?? null);
     const [year, setYear] = useState(new Date().getFullYear());
     const [mon, setMon] = useState<number | null>(null);
-    const [tab, setTab] = useState<'calendar' | 'kanban' | 'tasks' | 'milestones'>('calendar');
+    const [tab, setTab] = useState<'calendar' | 'kanban' | 'tasks' | 'milestones' | 'queue'>('calendar');
 
     // ── Dialogs & Modals state ──
     const [dlgDate, setDlgDate] = useState<string | null>(null);
@@ -258,14 +260,15 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
 
     // ── CRUD: Items ──
     const addItem = async (date: string, freq?: string, initialData?: { title?: string; fmt?: string }) => {
-        if (!curClient) return;
+        const targetClient = fichaItem?.client_id || curClient;
+        if (!targetClient) return;
         const id = uid('i');
         const title = initialData?.title || '';
         const fmt = initialData?.fmt || 'Post';
 
         if (freq) {
             const rule: PlannerRule = {
-                id, client_id: curClient, date, freq, fmt, title, status: 'Idea', note: '', platforms: []
+                id, client_id: targetClient, date, freq, fmt, title, status: 'Idea', note: '', platforms: []
             };
             setRules(prev => [...prev, rule]);
             await withSaving(async () => {
@@ -274,7 +277,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
             });
         } else {
             const item: PlannerItem = {
-                id, client_id: curClient, date, fmt, title, status: 'Idea', note: '', canva_link: '', platforms: []
+                id, client_id: targetClient, date, fmt, title, status: 'Idea', note: '', canva_link: '', platforms: []
             };
             setItems(prev => [...prev, item]);
             await withSaving(async () => {
@@ -490,6 +493,19 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
         setDlgDate(item.date);
     };
 
+    const allClientsItems = useMemo(() => {
+        const itemMap = new Map<string, PlannerItem>();
+        const curY = new Date().getFullYear();
+        for (const cl of clients) {
+            const thisYearItems = buildItems(cl.id, curY);
+            const nextYearItems = buildItems(cl.id, curY + 1);
+            for (const it of [...thisYearItems, ...nextYearItems]) {
+                itemMap.set(it.id, it);
+            }
+        }
+        return Array.from(itemMap.values());
+    }, [clients, buildItems]);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center">
@@ -505,9 +521,10 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
 
     const client = clients.find(c => c.id === curClient);
     const allItems = curClient ? buildItems(curClient, year) : [];
+
     const allSearchItems = screen === 'calendar' && curClient
         ? allItems
-        : items;
+        : allClientsItems;
 
     return (
         <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col pb-20 md:pb-6">
@@ -560,6 +577,21 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                 }`}
                             >
                                 ⌂ Inicio
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setScreen('queue');
+                                    setDlgDate(null);
+                                    setFichaItem(null);
+                                }}
+                                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                                    screen === 'queue'
+                                        ? 'bg-[#F7931E] text-white shadow-sm font-bold'
+                                        : 'text-white/40 hover:text-white/80'
+                                }`}
+                            >
+                                <ListOrdered className="w-3.5 h-3.5" />
+                                Cola
                             </button>
                             {clients.map(c => (
                                 <button
@@ -680,6 +712,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                             {([
                                 ['calendar', 'Calendario', Calendar],
                                 ['kanban', 'Kanban', KanbanIcon],
+                                ['queue', 'Cola', ListOrdered],
                                 ['tasks', 'Tareas', CheckSquare],
                                 ['milestones', 'Hitos', Star]
                             ] as const).map(([key, label, Icon]) => (
@@ -747,6 +780,21 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                 onUpdateClientAvatar={updateClientAvatar}
                                 onDeleteClient={deleteClient}
                                 mode={mode}
+                            />
+                        ) : screen === 'queue' ? (
+                            <ProductionQueue
+                                allClientsItems={allClientsItems}
+                                clients={clients}
+                                mode={mode}
+                                fixedClientId={null}
+                                onUpdateStatus={(id, status, isRule) => updateItem(id, { status }, isRule)}
+                                onOpenCard={item => {
+                                    if (item.client_id !== curClient) {
+                                        setCurClient(item.client_id);
+                                    }
+                                    setDlgDate(item.date);
+                                    setFichaItem(item);
+                                }}
                             />
                         ) : !curClient ? (
                             <div className="text-center py-24 text-white/30">
@@ -846,6 +894,21 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                     setFichaItem(item);
                                 }}
                             />
+                        ) : tab === 'queue' ? (
+                            <ProductionQueue
+                                allClientsItems={allClientsItems}
+                                clients={clients}
+                                mode={mode}
+                                fixedClientId={curClient}
+                                onUpdateStatus={(id, status, isRule) => updateItem(id, { status }, isRule)}
+                                onOpenCard={item => {
+                                    if (item.client_id !== curClient) {
+                                        setCurClient(item.client_id);
+                                    }
+                                    setDlgDate(item.date);
+                                    setFichaItem(item);
+                                }}
+                            />
                         ) : tab === 'tasks' ? (
                             <TasksView
                                 tasks={tasks.filter(t => t.client_id === curClient)}
@@ -911,6 +974,19 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                         <button
                             onClick={() => {
                                 setScreen('calendar');
+                                setTab('queue');
+                            }}
+                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
+                                (screen === 'calendar' && tab === 'queue') || screen === 'queue' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
+                            }`}
+                        >
+                            <ListOrdered className="w-4 h-4" />
+                            <span>Cola</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                setScreen('calendar');
                                 setTab('tasks');
                             }}
                             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
@@ -937,12 +1013,12 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                 )}
             </nav>
 
-            {/* Global Day Dialog & Ficha View (Accessible from Month, Kanban, Tasks & Search) */}
+            {/* Global Day Dialog & Ficha View (Accessible from Month, Kanban, Tasks, Queue & Search) */}
             {dlgDate && (
                 <DayDialog
                     mode={mode}
                     date={dlgDate}
-                    items={allItems.filter(i => i.date === dlgDate)}
+                    items={(curClient ? buildItems(curClient, Number(dlgDate.split('-')[0])) : allClientsItems).filter(i => i.date === dlgDate)}
                     milestones={curClient ? milestoneOn(curClient, dlgDate) : []}
                     fichaItem={fichaItem}
                     setFichaItem={setFichaItem}
@@ -972,6 +1048,11 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                 curClient={curClient}
                 screen={screen}
                 onGoHome={goHome}
+                onGoQueue={() => {
+                    setScreen('queue');
+                    setDlgDate(null);
+                    setFichaItem(null);
+                }}
                 onSelectClient={openClient}
                 onAddClient={addClient}
                 onExportAll={() => exportJSON()}
