@@ -24,6 +24,7 @@ import { MilestonesView } from './MilestonesView';
 import { QuickSearchModal } from './QuickSearchModal';
 import { MobileDrawer } from './MobileDrawer';
 import { ConfirmModal } from './ConfirmModal';
+import { DayDialog } from './DayDialog';
 
 export interface PlannerAppProps {
     mode: 'admin' | 'client';
@@ -840,11 +841,9 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                 items={allItems}
                                 mode={mode}
                                 onUpdateStatus={(id, status, isRule) => updateItem(id, { status }, isRule)}
-                                onOpenDay={(date, item) => {
-                                    const [, mStr] = date.split('-');
-                                    setMon(Number(mStr) - 1);
-                                    setDlgDate(date);
-                                    if (item) setFichaItem(item);
+                                onOpenCard={item => {
+                                    setDlgDate(item.date);
+                                    setFichaItem(item);
                                 }}
                             />
                         ) : tab === 'tasks' ? (
@@ -937,6 +936,25 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                     </>
                 )}
             </nav>
+
+            {/* Global Day Dialog & Ficha View (Accessible from Month, Kanban, Tasks & Search) */}
+            {dlgDate && (
+                <DayDialog
+                    mode={mode}
+                    date={dlgDate}
+                    items={allItems.filter(i => i.date === dlgDate)}
+                    milestones={curClient ? milestoneOn(curClient, dlgDate) : []}
+                    fichaItem={fichaItem}
+                    setFichaItem={setFichaItem}
+                    onClose={() => {
+                        setDlgDate(null);
+                        setFichaItem(null);
+                    }}
+                    onAdd={addItem}
+                    onUpdate={updateItem}
+                    onDelete={deleteItem}
+                />
+            )}
 
             {/* Quick Search Modal */}
             <QuickSearchModal

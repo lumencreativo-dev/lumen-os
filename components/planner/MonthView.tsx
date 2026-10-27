@@ -314,22 +314,6 @@ export function MonthView({
                         </div>
                     ) : null}
                 </DragOverlay>
-
-                {/* Day Dialog */}
-                {dlgDate && (
-                    <DayDialog
-                        mode={mode}
-                        date={dlgDate}
-                        items={monthItems.filter(i => i.date === dlgDate)}
-                        milestones={milestoneOnFn(dlgDate)}
-                        fichaItem={fichaItem}
-                        setFichaItem={setFichaItem}
-                        onClose={() => setDlgDate(null)}
-                        onAdd={onAddItem}
-                        onUpdate={onUpdateItem}
-                        onDelete={onDeleteItem}
-                    />
-                )}
             </div>
         </DndContext>
     );
