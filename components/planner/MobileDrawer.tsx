@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Plus, Upload, Download, Check, Users, ListOrdered } from 'lucide-react';
+import { X, Calendar, Plus, Upload, Download, Check, Users, ListOrdered, BarChart3, Mail, Sparkles } from 'lucide-react';
 import { PlannerClient } from './types';
 
 interface MobileDrawerProps {
@@ -11,6 +11,8 @@ interface MobileDrawerProps {
     clients: PlannerClient[];
     curClient: string | null;
     screen: 'home' | 'calendar' | 'queue';
+    suiteModule: 'content' | 'crm' | 'metrics' | 'email';
+    onSelectModule: (mod: 'content' | 'crm' | 'metrics' | 'email') => void;
     onGoHome: () => void;
     onGoQueue: () => void;
     onSelectClient: (clientId: string) => void;
@@ -25,6 +27,8 @@ export function MobileDrawer({
     clients,
     curClient,
     screen,
+    suiteModule,
+    onSelectModule,
     onGoHome,
     onGoQueue,
     onSelectClient,
@@ -57,11 +61,11 @@ export function MobileDrawer({
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between pb-4 border-b border-white/10">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-[#F7931E] flex items-center justify-center">
-                                    <Calendar className="w-4 h-4 text-white" />
+                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#F7931E] to-[#FF6B00] flex items-center justify-center shadow-lg shadow-[#F7931E]/20">
+                                    <Sparkles className="w-4 h-4 text-white" />
                                 </div>
                                 <span className="font-black text-white text-sm tracking-tight">
-                                    LUMEN <span className="text-[#F7931E]">PLANNER</span>
+                                    LUMEN <span className="text-[#F7931E]">SUITE</span>
                                 </span>
                             </div>
                             <button
@@ -76,31 +80,78 @@ export function MobileDrawer({
                         <div className="py-4 space-y-1.5">
                             <button
                                 onClick={() => {
+                                    onSelectModule('content');
                                     onGoHome();
                                     onClose();
                                 }}
                                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                                    screen === 'home'
+                                    suiteModule === 'content' && screen === 'home'
                                         ? 'bg-[#F7931E] text-white shadow-lg shadow-[#F7931E]/20'
                                         : 'text-white/70 hover:bg-white/5'
                                 }`}
                             >
                                 <span className="text-base">⌂</span>
-                                <span>Inicio (Clientes)</span>
+                                <span>Contenidos (Clientes)</span>
                             </button>
                             <button
                                 onClick={() => {
+                                    onSelectModule('content');
                                     onGoQueue();
                                     onClose();
                                 }}
                                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                                    screen === 'queue'
+                                    suiteModule === 'content' && screen === 'queue'
                                         ? 'bg-[#F7931E] text-white shadow-lg shadow-[#F7931E]/20'
                                         : 'text-white/70 hover:bg-white/5'
                                 }`}
                             >
                                 <ListOrdered className="w-4 h-4" />
                                 <span>Cola de Producción</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    onSelectModule('crm');
+                                    onClose();
+                                }}
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                                    suiteModule === 'crm'
+                                        ? 'bg-[#F7931E] text-white shadow-lg shadow-[#F7931E]/20'
+                                        : 'text-white/70 hover:bg-white/5'
+                                }`}
+                            >
+                                <Users className="w-4 h-4" />
+                                <span>CRM de Prospectos</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    onSelectModule('metrics');
+                                    onClose();
+                                }}
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                                    suiteModule === 'metrics'
+                                        ? 'bg-[#F7931E] text-white shadow-lg shadow-[#F7931E]/20'
+                                        : 'text-white/70 hover:bg-white/5'
+                                }`}
+                            >
+                                <BarChart3 className="w-4 h-4" />
+                                <span>Métricas de Redes</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    onSelectModule('email');
+                                    onClose();
+                                }}
+                                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                                    suiteModule === 'email'
+                                        ? 'bg-[#F7931E] text-white shadow-lg shadow-[#F7931E]/20'
+                                        : 'text-white/40 hover:bg-white/5'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Mail className="w-4 h-4" />
+                                    <span>Correo (Resend)</span>
+                                </div>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/50">Próx</span>
                             </button>
                         </div>
 

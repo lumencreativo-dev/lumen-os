@@ -64,6 +64,17 @@ export const PRIORITIES = [
 
 export const FREQ_LABEL: Record<string, string> = { w: 'semana', m: 'mes', y: 'año' };
 
+export const LEAD_STAGES = [
+    { key: 'nuevo',       label: 'Nuevo',       color: '#3B82F6', badgeBg: 'bg-blue-950/60',   badgeText: 'text-blue-300',   badgeBorder: 'border-blue-500/40' },
+    { key: 'contactado',  label: 'Contactado',  color: '#8B5CF6', badgeBg: 'bg-purple-950/60', badgeText: 'text-purple-300', badgeBorder: 'border-purple-500/40' },
+    { key: 'calificado',  label: 'Calificado',  color: '#EAB308', badgeBg: 'bg-yellow-950/60', badgeText: 'text-yellow-300', badgeBorder: 'border-yellow-500/40' },
+    { key: 'propuesta',   label: 'Propuesta',   color: '#F97316', badgeBg: 'bg-orange-950/60', badgeText: 'text-orange-300', badgeBorder: 'border-orange-500/40' },
+    { key: 'ganado',      label: 'Ganado',      color: '#10B981', badgeBg: 'bg-emerald-950/60',badgeText: 'text-emerald-300',badgeBorder: 'border-emerald-500/40' },
+    { key: 'perdido',     label: 'Perdido',     color: '#6B7280', badgeBg: 'bg-zinc-900/60',   badgeText: 'text-zinc-400',   badgeBorder: 'border-zinc-700/40' },
+] as const;
+
+export const LEAD_SOURCES = ['Instagram', 'WhatsApp', 'Web', 'Referido', 'Evento', 'Otro'] as const;
+
 // ─── Utils ────────────────────────────────────────────────────────────────────
 export const uid = (p: string) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 export const pad = (n: number) => String(n).padStart(2, '0');
