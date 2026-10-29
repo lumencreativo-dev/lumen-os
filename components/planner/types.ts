@@ -4,6 +4,15 @@ export interface PlannerClient {
     color: string;
     created_at?: string;
     avatar?: string;
+    max_revisions?: number;
+    contact_phone?: string;
+    portal_welcome_msg?: string;
+}
+
+export interface RevisionRecord {
+    round: number;
+    date: string;
+    feedback: string;
 }
 
 export interface PlannerItem {
@@ -26,6 +35,11 @@ export interface PlannerItem {
     visual_idea?: string;
     material_link?: string;
     published_link?: string;
+    // Approvals & revisions
+    revision_count?: number;
+    approved_at?: string;
+    approved_by?: string;
+    revision_history?: RevisionRecord[];
     // Runtime flags
     rule?: boolean;
     ruleId?: string;
@@ -51,6 +65,10 @@ export interface PlannerRule {
     visual_idea?: string;
     material_link?: string;
     published_link?: string;
+    revision_count?: number;
+    approved_at?: string;
+    approved_by?: string;
+    revision_history?: RevisionRecord[];
 }
 
 export interface PlannerTask {

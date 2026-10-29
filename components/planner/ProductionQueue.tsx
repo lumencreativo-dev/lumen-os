@@ -236,6 +236,17 @@ export function ProductionQueue({
                 {/* Toggles */}
                 <div className="flex items-center gap-2 ml-auto flex-wrap">
                     <button
+                        onClick={() => setFilterStatus(v => v === 'Aprobado' ? '' : 'Aprobado')}
+                        title="Ver solo piezas aprobadas por el cliente listas para ser programadas"
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-bold transition-all ${
+                            filterStatus === 'Aprobado'
+                                ? 'bg-teal-500/20 border-teal-500/60 text-teal-300 shadow-sm'
+                                : 'bg-white/5 border-white/10 text-teal-400/70 hover:text-teal-300'
+                        }`}
+                    >
+                        <span>🎯 Listos para Programar</span>
+                    </button>
+                    <button
                         onClick={() => setOnlyCreative(v => !v)}
                         title="Filtrar solo lo que está en producción activa (Idea, Diseño, Corregir, Por aprobar)"
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-semibold transition-all ${
@@ -369,6 +380,21 @@ export function ProductionQueue({
                                                         {item.platforms && item.platforms.length > 0 && (
                                                             <span className="text-[10px] text-white/30">
                                                                 · {item.platforms.join(', ')}
+                                                            </span>
+                                                        )}
+                                                        {item.status === 'Aprobado' && (
+                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 animate-pulse">
+                                                                ✓ Aprobado por cliente
+                                                            </span>
+                                                        )}
+                                                        {item.status === 'Corregir' && (
+                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-300 border border-red-500/40">
+                                                                ⚠️ Requiere ajustes {item.revision_count ? `(#${item.revision_count})` : ''}
+                                                            </span>
+                                                        )}
+                                                        {item.material_link && (
+                                                            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-white/5 text-[#F7931E] border border-white/10">
+                                                                Drive 🔗
                                                             </span>
                                                         )}
                                                     </div>

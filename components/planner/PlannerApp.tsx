@@ -33,6 +33,7 @@ import { QuickSearchModal } from './QuickSearchModal';
 import { MobileDrawer } from './MobileDrawer';
 import { ConfirmModal } from './ConfirmModal';
 import { DayDialog } from './DayDialog';
+import { ClientPortalView } from './ClientPortalView';
 
 export interface PlannerAppProps {
     mode: 'admin' | 'client';
@@ -67,6 +68,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
     const [fichaItem, setFichaItem] = useState<PlannerItem | null>(null);
     const [searchOpen, setSearchOpen] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
     const [clientToDelete, setClientToDelete] = useState<PlannerClient | null>(null);
 
     // ── Save Indicator & UI state ──
@@ -286,6 +288,15 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
         await withSaving(async () => {
             await supabase.from('PlannerClient').update({ avatar: avatarUrl }).eq('id', clientId);
             showToast('Logo del cliente actualizado');
+        });
+    };
+
+    const updateClient = async (clientId: string, patch: Partial<PlannerClient>) => {
+        setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...patch } : c));
+        await withSaving(async () => {
+            const { error } = await supabase.from('PlannerClient').update(patch).eq('id', clientId);
+            if (error) showToast('Error al actualizar cliente: ' + error.message);
+            else showToast('Configuración del cliente guardada');
         });
     };
 
@@ -655,7 +666,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
         : allClientsItems;
 
     return (
-        <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col pb-20 md:pb-6">
+        <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col pb-28 md:pb-8">
             {/* ══ Header ══ */}
             <header className="sticky top-0 z-30 bg-[#0D0D0D]/95 backdrop-blur-md border-b border-white/5">
                 <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
@@ -874,9 +885,11 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                         <span className="text-white/15 text-xs">›</span>
 
                         {/* Client Switcher Dropdown */}
-                        <div className="relative group/client">
+                        <div className="relative">
                             <button
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
+                                type="button"
+                                onClick={() => setClientDropdownOpen(prev => !prev)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all text-xs font-bold"
                             >
                                 <div
                                     className="w-5 h-5 rounded-lg flex items-center justify-center text-white text-[10px] font-black shrink-0 overflow-hidden"
@@ -888,63 +901,76 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                         client?.name?.[0]?.toUpperCase() ?? '?'
                                     )}
                                 </div>
-                                <span className="text-white font-bold text-xs">{client?.name}</span>
-                                <ChevronRight className="w-3 h-3 text-white/30 rotate-90" />
+                                <span className="text-white truncate max-w-[110px] sm:max-w-[180px]">{client?.name}</span>
+                                <ChevronRight className={`w-3 h-3 text-white/30 transition-transform ${clientDropdownOpen ? 'rotate-90' : ''}`} />
                             </button>
-                            {/* Dropdown */}
-                            <div className="absolute top-full left-0 mt-1.5 w-56 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl overflow-hidden opacity-0 invisible group-hover/client:opacity-100 group-hover/client:visible transition-all duration-200 z-50">
-                                <div className="p-2 space-y-0.5 max-h-64 overflow-y-auto">
-                                    {clients.map(c => (
-                                        <button
-                                            key={c.id}
-                                            onClick={() => openClient(c.id)}
-                                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                                                curClient === c.id
-                                                    ? 'bg-white/10 text-white'
-                                                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                                            }`}
-                                        >
-                                            <div
-                                                className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black shrink-0 overflow-hidden"
-                                                style={{ backgroundColor: c.color }}
+
+                            {/* Dropdown Menu (Touch & Click Friendly) */}
+                            {clientDropdownOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs"
+                                        onClick={() => setClientDropdownOpen(false)}
+                                    />
+                                    <div className="absolute top-full left-0 mt-1.5 w-64 bg-[#1A1A1A] border border-white/15 rounded-2xl shadow-2xl overflow-hidden z-50">
+                                        <div className="p-2 space-y-0.5 max-h-64 overflow-y-auto">
+                                            {clients.map(c => (
+                                                <button
+                                                    key={c.id}
+                                                    onClick={() => {
+                                                        openClient(c.id);
+                                                        setClientDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                                                        curClient === c.id
+                                                            ? 'bg-white/10 text-white'
+                                                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                                                    }`}
+                                                >
+                                                    <div
+                                                        className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black shrink-0 overflow-hidden"
+                                                        style={{ backgroundColor: c.color }}
+                                                    >
+                                                        {c.avatar ? (
+                                                            <img src={c.avatar} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            c.name[0].toUpperCase()
+                                                        )}
+                                                    </div>
+                                                    <span className="truncate flex-1 text-left">{c.name}</span>
+                                                    {curClient === c.id && (
+                                                        <Check className="w-3 h-3 text-[#F7931E] ml-auto shrink-0" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {/* Add new client inline */}
+                                        <div className="border-t border-white/5 p-2">
+                                            <form
+                                                onSubmit={e => {
+                                                    e.preventDefault();
+                                                    addClient();
+                                                    setClientDropdownOpen(false);
+                                                }}
+                                                className="flex items-center gap-1.5"
                                             >
-                                                {c.avatar ? (
-                                                    <img src={c.avatar} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    c.name[0].toUpperCase()
-                                                )}
-                                            </div>
-                                            <span className="truncate">{c.name}</span>
-                                            {curClient === c.id && (
-                                                <Check className="w-3 h-3 text-[#F7931E] ml-auto shrink-0" />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                                {/* Add new client inline */}
-                                <div className="border-t border-white/5 p-2">
-                                    <form
-                                        onSubmit={e => {
-                                            e.preventDefault();
-                                            addClient();
-                                        }}
-                                        className="flex items-center gap-1.5"
-                                    >
-                                        <input
-                                            value={newClientName}
-                                            onChange={e => setNewClientName(e.target.value)}
-                                            placeholder="Nuevo cliente..."
-                                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/30 outline-none focus:border-[#F7931E]/60"
-                                        />
-                                        <button
-                                            type="submit"
-                                            className="bg-[#F7931E] text-white rounded-lg p-1.5 hover:bg-[#F7931E]/90 transition-all"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" />
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
+                                                <input
+                                                    value={newClientName}
+                                                    onChange={e => setNewClientName(e.target.value)}
+                                                    placeholder="Nuevo cliente..."
+                                                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/30 outline-none focus:border-[#F7931E]/60"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    className="bg-[#F7931E] text-white rounded-lg p-1.5 hover:bg-[#F7931E]/90 transition-all"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" />
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Content Sub-tabs */}
@@ -1046,8 +1072,16 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.18 }}
                     >
-                        {/* Módulos de Lumen Creativo Suite */}
-                        {suiteModule === 'crm' ? (
+                        {/* Experiencia VIP del Portal del Cliente */}
+                        {mode === 'client' && client ? (
+                            <ClientPortalView
+                                client={client}
+                                items={allItems}
+                                metrics={metrics}
+                                onUpdateItem={updateItem}
+                                onShowToast={showToast}
+                            />
+                        ) : suiteModule === 'crm' ? (
                             <CrmView
                                 leads={leads}
                                 onAddLead={addLead}
@@ -1072,6 +1106,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                 buildItems={buildItems}
                                 onOpenClient={openClient}
                                 onUpdateClientAvatar={updateClientAvatar}
+                                onUpdateClient={updateClient}
                                 onDeleteClient={deleteClient}
                                 onGoToQueue={() => {
                                     setSuiteModule('content');
@@ -1230,126 +1265,151 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                 </AnimatePresence>
             </main>
 
-            {/* Improvement #11: Fixed Bottom Navigation Bar on Mobile */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0D0D0D]/95 backdrop-blur-lg border-t border-white/10 px-2 py-2 flex items-center justify-around shadow-2xl">
-                {mode === 'admin' && (
-                    <>
-                        <button
-                            onClick={() => {
-                                setSuiteModule('content');
-                                goHome();
-                            }}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                suiteModule === 'content' && screen === 'home' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <span className="text-base leading-none">⌂</span>
-                            <span>Inicio</span>
-                        </button>
-                        <button
-                            onClick={() => {
-                                setSuiteModule('content');
-                                setScreen('queue');
-                                setDlgDate(null);
-                                setFichaItem(null);
-                            }}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                suiteModule === 'content' && screen === 'queue' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <ListOrdered className="w-4 h-4" />
-                            <span>Cola</span>
-                        </button>
-                        <button
-                            onClick={() => setSuiteModule('crm')}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                suiteModule === 'crm' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <Users className="w-4 h-4" />
-                            <span>CRM</span>
-                        </button>
-                        <button
-                            onClick={() => setSuiteModule('metrics')}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                suiteModule === 'metrics' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <BarChart3 className="w-4 h-4" />
-                            <span>Métricas</span>
-                        </button>
-                    </>
-                )}
+            {/* ══ Mobile Bottom Navigation Bar (Admin) ══ */}
+            {mode === 'admin' && (
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0F0F0F]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl pb-[calc(env(safe-area-inset-bottom,0px)+8px)]">
+                    {curClient && screen === 'calendar' && suiteModule === 'content' ? (
+                        /* Mode B: Client Workspace Tabs (5 clear buttons) */
+                        <>
+                            <button
+                                onClick={goHome}
+                                className="flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold text-white/50 hover:text-white transition-all active:scale-95"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                <span>Salir</span>
+                            </button>
 
-                {curClient && suiteModule === 'content' && (
-                    <>
-                        <button
-                            onClick={() => {
-                                setScreen('calendar');
-                                setTab('calendar');
-                            }}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                screen === 'calendar' && tab === 'calendar' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <Calendar className="w-4 h-4" />
-                            <span>Calendario</span>
-                        </button>
+                            <button
+                                onClick={() => setTab('calendar')}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    tab === 'calendar' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <Calendar className="w-4 h-4" />
+                                <span>Calendario</span>
+                                {tab === 'calendar' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
 
-                        <button
-                            onClick={() => {
-                                setScreen('calendar');
-                                setTab('kanban');
-                            }}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                screen === 'calendar' && tab === 'kanban' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <KanbanIcon className="w-4 h-4" />
-                            <span>Kanban</span>
-                        </button>
+                            <button
+                                onClick={() => setTab('kanban')}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    tab === 'kanban' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <KanbanIcon className="w-4 h-4" />
+                                <span>Kanban</span>
+                                {tab === 'kanban' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
 
-                        <button
-                            onClick={() => {
-                                setScreen('calendar');
-                                setTab('queue');
-                            }}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                (screen === 'calendar' && tab === 'queue') || screen === 'queue' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <ListOrdered className="w-4 h-4" />
-                            <span>Cola</span>
-                        </button>
+                            <button
+                                onClick={() => setTab('queue')}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    tab === 'queue' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <ListOrdered className="w-4 h-4" />
+                                <span>Cola</span>
+                                {tab === 'queue' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
 
-                        <button
-                            onClick={() => {
-                                setScreen('calendar');
-                                setTab('tasks');
-                            }}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                screen === 'calendar' && tab === 'tasks' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <CheckSquare className="w-4 h-4" />
-                            <span>Tareas</span>
-                        </button>
+                            <button
+                                onClick={() => setTab('tasks')}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    tab === 'tasks' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <CheckSquare className="w-4 h-4" />
+                                <span>Tareas</span>
+                                {tab === 'tasks' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
+                        </>
+                    ) : (
+                        /* Mode A: Suite Global Modules (5 clear buttons) */
+                        <>
+                            <button
+                                onClick={() => {
+                                    setSuiteModule('content');
+                                    goHome();
+                                }}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    suiteModule === 'content' && screen === 'home' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <span className="text-base leading-none">⌂</span>
+                                <span>Inicio</span>
+                                {suiteModule === 'content' && screen === 'home' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
 
-                        <button
-                            onClick={() => {
-                                setScreen('calendar');
-                                setTab('milestones');
-                            }}
-                            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                                screen === 'calendar' && tab === 'milestones' ? 'text-[#F7931E]' : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            <Star className="w-4 h-4" />
-                            <span>Hitos</span>
-                        </button>
-                    </>
-                )}
-            </nav>
+                            <button
+                                onClick={() => {
+                                    setSuiteModule('content');
+                                    setScreen('queue');
+                                    setDlgDate(null);
+                                    setFichaItem(null);
+                                }}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    suiteModule === 'content' && screen === 'queue' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <ListOrdered className="w-4 h-4" />
+                                <span>Cola</span>
+                                {suiteModule === 'content' && screen === 'queue' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => setSuiteModule('crm')}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    suiteModule === 'crm' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <div className="relative">
+                                    <Users className="w-4 h-4" />
+                                    {leads.filter(l => l.followup_date === todayStr() && l.stage !== 'ganado' && l.stage !== 'perdido').length > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                    )}
+                                </div>
+                                <span>CRM</span>
+                                {suiteModule === 'crm' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => setSuiteModule('metrics')}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    suiteModule === 'metrics' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <BarChart3 className="w-4 h-4" />
+                                <span>Métricas</span>
+                                {suiteModule === 'metrics' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => setDrawerOpen(true)}
+                                className="flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold text-white/50 hover:text-white transition-all active:scale-95"
+                            >
+                                <Menu className="w-4 h-4" />
+                                <span>Menú</span>
+                            </button>
+                        </>
+                    )}
+                </nav>
+            )}
 
             {/* Global Day Dialog & Ficha View (Accessible from Month, Kanban, Tasks, Queue & Search) */}
             {dlgDate && (

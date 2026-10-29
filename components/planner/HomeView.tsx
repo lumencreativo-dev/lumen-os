@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react';
 import {
     ChevronLeft, ChevronRight, Image as ImageIcon, Trash2,
     Zap, Clock, AlertTriangle, CheckSquare, Calendar,
-    ArrowRight, Flame, TrendingUp, Plus
+    ArrowRight, Flame, TrendingUp, Plus, Settings2, Copy,
+    Check, ExternalLink, ShieldCheck, Phone
 } from 'lucide-react';
 import { PlannerClient, PlannerItem, PlannerTask } from './types';
 import { FMTS, MONTHS, STATUSES, STATUS_BADGE_STYLES, todayStr, pad } from './constants';
@@ -18,6 +19,7 @@ interface HomeViewProps {
     buildItems: (clientId: string, forYear: number) => PlannerItem[];
     onOpenClient: (clientId: string, goToCurrentMonth?: boolean) => void;
     onUpdateClientAvatar?: (clientId: string, avatarUrl: string) => void;
+    onUpdateClient?: (clientId: string, patch: Partial<PlannerClient>) => void;
     onDeleteClient?: (clientId: string) => void;
     onGoToQueue?: () => void;
     onAddClient?: (name?: string) => void;
@@ -32,6 +34,7 @@ export function HomeView({
     buildItems,
     onOpenClient,
     onUpdateClientAvatar,
+    onUpdateClient,
     onDeleteClient,
     onGoToQueue,
     onAddClient,
@@ -47,6 +50,38 @@ export function HomeView({
     const [editingAvatarId, setEditingAvatarId] = useState<string | null>(null);
     const [avatarUrlInput, setAvatarUrlInput] = useState('');
     const [newClientName, setNewClientName] = useState('');
+
+    // Settings modal state
+    const [settingsClient, setSettingsClient] = useState<PlannerClient | null>(null);
+    const [settingsMaxRevs, setSettingsMaxRevs] = useState<number>(2);
+    const [settingsPhone, setSettingsPhone] = useState<string>('');
+    const [settingsAvatar, setSettingsAvatar] = useState<string>('');
+    const [copiedPortalId, setCopiedPortalId] = useState<string | null>(null);
+
+    const openSettings = (c: PlannerClient) => {
+        setSettingsClient(c);
+        setSettingsMaxRevs(c.max_revisions ?? 2);
+        setSettingsPhone(c.contact_phone || '');
+        setSettingsAvatar(c.avatar || '');
+    };
+
+    const handleSaveSettings = () => {
+        if (!settingsClient || !onUpdateClient) return;
+        onUpdateClient(settingsClient.id, {
+            max_revisions: Number(settingsMaxRevs) || 2,
+            contact_phone: settingsPhone.trim(),
+            avatar: settingsAvatar.trim()
+        });
+        setSettingsClient(null);
+    };
+
+    const handleCopyPortalLink = (clientId: string) => {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const url = `${origin}/planner/${clientId}`;
+        navigator.clipboard.writeText(url);
+        setCopiedPortalId(clientId);
+        setTimeout(() => setCopiedPortalId(null), 2000);
+    };
 
     const handleSaveAvatar = (clientId: string) => {
         if (onUpdateClientAvatar) {
@@ -373,14 +408,25 @@ export function HomeView({
                                                 </span>
                                             </div>
 
-                                            {mode === 'admin' && onDeleteClient && (
-                                                <button
-                                                    onClick={() => setClientToDelete(c)}
-                                                    title="Eliminar cliente"
-                                                    className="text-white/20 hover:text-red-400 p-1.5 rounded-lg hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                            {mode === 'admin' && (
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => openSettings(c)}
+                                                        title="Configuración y Portal del Cliente"
+                                                        className="text-white/40 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-all"
+                                                    >
+                                                        <Settings2 className="w-4 h-4" />
+                                                    </button>
+                                                    {onDeleteClient && (
+                                                        <button
+                                                            onClick={() => setClientToDelete(c)}
+                                                            title="Eliminar cliente"
+                                                            className="text-white/20 hover:text-red-400 p-1.5 rounded-lg hover:bg-white/5 transition-all"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
 
@@ -484,6 +530,140 @@ export function HomeView({
                 }}
                 onCancel={() => setClientToDelete(null)}
             />
+
+            {/* Client Settings & Portal Modal */}
+            {settingsClient && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+                    onClick={() => setSettingsClient(null)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        className="bg-[#161616] border border-white/15 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-5"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-base font-black shrink-0 overflow-hidden"
+                                    style={{ backgroundColor: settingsClient.color }}
+                                >
+                                    {settingsAvatar ? (
+                                        <img src={settingsAvatar} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        settingsClient.name[0]?.toUpperCase()
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-bold text-base">Configuración de {settingsClient.name}</h3>
+                                    <p className="text-white/40 text-xs">Ajustes del cliente y portal de aprobaciones</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSettingsClient(null)}
+                                className="text-white/40 hover:text-white p-1 rounded-lg"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Portal share link */}
+                        <div className="p-3 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-white/70 flex items-center gap-1.5">
+                                    <ShieldCheck className="w-3.5 h-3.5 text-[#F7931E]" /> Enlace al Portal del Cliente
+                                </span>
+                                <a
+                                    href={`/planner/${settingsClient.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#F7931E] hover:underline flex items-center gap-1 text-[11px]"
+                                >
+                                    Abrir portal <ExternalLink className="w-3 h-3" />
+                                </a>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    readOnly
+                                    value={typeof window !== 'undefined' ? `${window.location.origin}/planner/${settingsClient.id}` : `/planner/${settingsClient.id}`}
+                                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-[11px] text-white/70 font-mono outline-none"
+                                />
+                                <button
+                                    onClick={() => handleCopyPortalLink(settingsClient.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+                                        copiedPortalId === settingsClient.id
+                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                            : 'bg-[#F7931E] text-white hover:bg-[#F7931E]/90'
+                                    }`}
+                                >
+                                    {copiedPortalId === settingsClient.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                    <span>{copiedPortalId === settingsClient.id ? 'Copiado' : 'Copiar'}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Max revisions setting */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-white/80 flex items-center justify-between">
+                                <span>Rondas de ajustes incluidas por contenido:</span>
+                                <span className="text-[#F7931E] font-black">{settingsMaxRevs} ronda{settingsMaxRevs !== 1 ? 's' : ''}</span>
+                            </label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={10}
+                                value={settingsMaxRevs}
+                                onChange={e => setSettingsMaxRevs(Math.max(1, parseInt(e.target.value) || 1))}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E]"
+                            />
+                            <p className="text-[11px] text-white/40">
+                                Al alcanzar este número de ajustes solicitados, el botón del portal se bloqueará.
+                            </p>
+                        </div>
+
+                        {/* Phone / WhatsApp */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-white/80 flex items-center gap-1.5">
+                                <Phone className="w-3.5 h-3.5 text-[#F7931E]" /> WhatsApp de soporte para el cliente:
+                            </label>
+                            <input
+                                value={settingsPhone}
+                                onChange={e => setSettingsPhone(e.target.value)}
+                                placeholder="+58 412 1234567"
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E] placeholder-white/20"
+                            />
+                        </div>
+
+                        {/* Avatar URL */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-white/80 flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5 text-[#F7931E]" /> Logo / Avatar URL:
+                            </label>
+                            <input
+                                value={settingsAvatar}
+                                onChange={e => setSettingsAvatar(e.target.value)}
+                                placeholder="https://...imagen.png"
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E] placeholder-white/20"
+                            />
+                        </div>
+
+                        {/* Save & Cancel */}
+                        <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+                            <button
+                                onClick={() => setSettingsClient(null)}
+                                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-semibold"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveSettings}
+                                className="px-5 py-2 rounded-xl bg-[#F7931E] hover:bg-[#F7931E]/90 text-white text-xs font-bold shadow-lg shadow-[#F7931E]/20"
+                            >
+                                Guardar configuración
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

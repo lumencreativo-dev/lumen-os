@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
     X, Plus, FileText, ArrowLeft, Clock, User, Target,
     Instagram, Hash, MousePointer, Eye, Link, ExternalLink, Trash2,
-    ChevronDown, ChevronUp
+    ChevronDown, ChevronUp, Check, AlertCircle
 } from 'lucide-react';
 import { PlannerItem, PlannerMilestone } from './types';
 import {
@@ -12,6 +12,7 @@ import {
     DAYS_FULL, MONTHS, fmtColor, safeHref, PLATFORM_PILLS
 } from './constants';
 import { ConfirmModal } from './ConfirmModal';
+import { MediaPreview } from './MediaPreview';
 
 interface DayDialogProps {
     mode: 'admin' | 'client';
@@ -391,6 +392,40 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
             {/* Form fields */}
             <div className="p-5 overflow-y-auto max-h-[60vh] space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Status Banners: Approval / Corrections */}
+                    {item.status === 'Aprobado' && (
+                        <div className="md:col-span-2 p-3 bg-teal-500/10 border border-teal-500/30 rounded-2xl flex items-center justify-between text-xs text-teal-300">
+                            <span className="flex items-center gap-2 font-bold">
+                                <Check className="w-4 h-4 text-teal-400" /> Aprobado por el cliente
+                                {item.approved_by && ` (${item.approved_by})`}
+                            </span>
+                            {item.approved_at && (
+                                <span className="text-white/40 text-[11px]">{new Date(item.approved_at).toLocaleDateString('es-ES')}</span>
+                            )}
+                        </div>
+                    )}
+
+                    {item.revision_history && item.revision_history.length > 0 && (
+                        <div className="md:col-span-2 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-2">
+                            <div className="flex items-center justify-between text-xs font-bold text-amber-400">
+                                <span className="flex items-center gap-1.5">
+                                    <AlertCircle className="w-3.5 h-3.5" /> Ajustes solicitados por el cliente (Ronda {item.revision_count ?? item.revision_history.length})
+                                </span>
+                            </div>
+                            <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                                {item.revision_history.map(r => (
+                                    <div key={r.round} className="bg-black/40 rounded-xl p-2.5 text-xs text-white/80">
+                                        <div className="flex items-center justify-between text-[11px] text-white/40 mb-1">
+                                            <span className="font-bold text-amber-300">Ronda #{r.round}</span>
+                                            <span>{new Date(r.date).toLocaleDateString('es-ES')}</span>
+                                        </div>
+                                        <p className="whitespace-pre-wrap">{r.feedback}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* 1. Titulo */}
                     <div className="md:col-span-2 space-y-1">
                         <label className="text-white/50 text-xs font-semibold flex items-center gap-1.5">
@@ -582,6 +617,9 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
                                 </a>
                             )}
                         </div>
+                        {item.material_link && (
+                            <MediaPreview url={item.material_link} title={item.title} className="mt-2" />
+                        )}
                     </div>
 
                     {/* 11. Published link */}
@@ -608,6 +646,9 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
                                 </a>
                             )}
                         </div>
+                        {item.material_link && (
+                            <MediaPreview url={item.material_link} title={item.title} className="mt-2" />
+                        )}
                     </div>
 
                     {/* 12. Feedback / Comentarios del cliente */}
