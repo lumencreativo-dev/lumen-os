@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     ChevronLeft, ChevronRight, Image as ImageIcon, Trash2,
     Zap, Clock, AlertTriangle, CheckSquare, Calendar,
     ArrowRight, Flame, TrendingUp, Plus, Settings2, Copy,
-    Check, ExternalLink, ShieldCheck, Phone
+    Check, ExternalLink, ShieldCheck, Phone, Instagram, Sparkles
 } from 'lucide-react';
 import { PlannerClient, PlannerItem, PlannerTask } from './types';
-import { FMTS, MONTHS, STATUSES, STATUS_BADGE_STYLES, todayStr, pad } from './constants';
+import { FMTS, MONTHS, STATUSES, STATUS_BADGE_STYLES, todayStr, pad, formatDDMMAAAA } from './constants';
 import { ConfirmModal } from './ConfirmModal';
+import { findSuggestedMetaAccount, MetaAccount, ClientMetaMapping } from '@/lib/metaMapping';
 
 interface HomeViewProps {
     clients: PlannerClient[];
@@ -56,22 +57,78 @@ export function HomeView({
     const [settingsMaxRevs, setSettingsMaxRevs] = useState<number>(2);
     const [settingsPhone, setSettingsPhone] = useState<string>('');
     const [settingsAvatar, setSettingsAvatar] = useState<string>('');
+    const [settingsMetaPageId, setSettingsMetaPageId] = useState<string>('');
+    const [settingsIgUser, setSettingsIgUser] = useState<string>('');
+    const [metaAccounts, setMetaAccounts] = useState<MetaAccount[]>([]);
+    const [metaMappings, setMetaMappings] = useState<Record<string, ClientMetaMapping>>({});
     const [copiedPortalId, setCopiedPortalId] = useState<string | null>(null);
+
+    // Fetch Meta accounts & mappings for client configuration
+    useEffect(() => {
+        Promise.all([
+            fetch('/api/meta/accounts').then(r => r.json()),
+            fetch('/api/meta/mappings').then(r => r.json())
+        ]).then(([accData, mapData]) => {
+            if (accData.success && accData.accounts) setMetaAccounts(accData.accounts);
+            if (mapData.success && mapData.mappings) setMetaMappings(mapData.mappings);
+        }).catch(err => console.error('Error cargando cuentas Meta en HomeView:', err));
+    }, []);
 
     const openSettings = (c: PlannerClient) => {
         setSettingsClient(c);
         setSettingsMaxRevs(c.max_revisions ?? 2);
         setSettingsPhone(c.contact_phone || '');
         setSettingsAvatar(c.avatar || '');
+
+        // Pre-fill Meta account from saved mapping or smart suggestion
+        const existingMap = metaMappings[c.id] || metaMappings[c.name];
+        if (existingMap?.facebookPageId) {
+            setSettingsMetaPageId(existingMap.facebookPageId);
+            setSettingsIgUser(existingMap.igUsername || '');
+        } else {
+            const suggestion = findSuggestedMetaAccount(c.name, c.id, metaAccounts, metaMappings);
+            if (suggestion.account) {
+                setSettingsMetaPageId(suggestion.account.facebookPageId);
+                setSettingsIgUser(suggestion.account.instagramUsername || '');
+            } else {
+                setSettingsMetaPageId('');
+                setSettingsIgUser('');
+            }
+        }
     };
 
-    const handleSaveSettings = () => {
+    const handleSaveSettings = async () => {
         if (!settingsClient || !onUpdateClient) return;
         onUpdateClient(settingsClient.id, {
             max_revisions: Number(settingsMaxRevs) || 2,
             contact_phone: settingsPhone.trim(),
             avatar: settingsAvatar.trim()
         });
+
+        // Save Meta mapping if selected
+        if (settingsMetaPageId || settingsIgUser) {
+            const acc = metaAccounts.find(a => a.facebookPageId === settingsMetaPageId);
+            try {
+                const res = await fetch('/api/meta/mappings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clientId: settingsClient.id,
+                        clientName: settingsClient.name,
+                        igUsername: settingsIgUser.replace(/^@/, '').trim() || acc?.instagramUsername,
+                        facebookPageId: settingsMetaPageId || acc?.facebookPageId,
+                        facebookPageName: acc?.facebookPageName
+                    })
+                });
+                const data = await res.json();
+                if (data.success && data.mappings) {
+                    setMetaMappings(data.mappings);
+                }
+            } catch (err) {
+                console.error('Error al guardar mapeo en Settings:', err);
+            }
+        }
+
         setSettingsClient(null);
     };
 
@@ -250,8 +307,7 @@ export function HomeView({
                             const fmt = FMTS.find(f => f.name === item.fmt);
                             const statusStyle = STATUS_BADGE_STYLES[item.status] || STATUS_BADGE_STYLES['Idea'];
                             const isToday = item.date === td;
-                            const dayLabel = isToday ? 'Hoy' :
-                                new Date(item.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                            const dayLabel = isToday ? 'Hoy' : formatDDMMAAAA(item.date);
 
                             return (
                                 <div
@@ -644,6 +700,53 @@ export function HomeView({
                                 placeholder="https://...imagen.png"
                                 className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#F7931E] placeholder-white/20"
                             />
+                        </div>
+
+                        {/* Meta / Instagram Linked Account */}
+                        <div className="space-y-2 p-3.5 rounded-2xl bg-white/5 border border-white/10">
+                            <div className="flex items-center justify-between gap-2">
+                                <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <Instagram className="w-3.5 h-3.5 text-pink-400" /> Cuenta Meta / Instagram vinculada:
+                                </label>
+                                {settingsMetaPageId && (
+                                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                        <Check className="w-2.5 h-2.5" /> Vinculada
+                                    </span>
+                                )}
+                            </div>
+
+                            <select
+                                value={settingsMetaPageId}
+                                onChange={e => {
+                                    setSettingsMetaPageId(e.target.value);
+                                    const acc = metaAccounts.find(a => a.facebookPageId === e.target.value);
+                                    if (acc && acc.instagramUsername) {
+                                        setSettingsIgUser(acc.instagramUsername);
+                                    }
+                                }}
+                                className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-[#F7931E] [color-scheme:dark]"
+                            >
+                                <option value="">(Selección automática por siglas / nombre)</option>
+                                {metaAccounts.map(acc => (
+                                    <option key={acc.facebookPageId} value={acc.facebookPageId}>
+                                        {acc.facebookPageName} {acc.instagramUsername ? `(@${acc.instagramUsername})` : ''}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <div className="flex items-center gap-2 pt-0.5">
+                                <span className="text-[11px] text-white/50 shrink-0">Usuario IG:</span>
+                                <input
+                                    value={settingsIgUser}
+                                    onChange={e => setSettingsIgUser(e.target.value)}
+                                    placeholder="ej: funsanantoniocarora"
+                                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-white text-xs outline-none focus:border-[#F7931E] placeholder-white/20"
+                                />
+                            </div>
+
+                            <p className="text-[10px] text-white/40 leading-relaxed">
+                                Al abrir contenidos de <strong>{settingsClient?.name}</strong>, MetaPublisher seleccionará automáticamente esta cuenta en primer lugar para evitar publicaciones cruzadas por error.
+                            </p>
                         </div>
 
                         {/* Save & Cancel */}

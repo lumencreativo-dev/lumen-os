@@ -6,17 +6,20 @@ import {
     Instagram, Hash, MousePointer, Eye, Link, ExternalLink, Trash2,
     ChevronDown, ChevronUp, Check, AlertCircle
 } from 'lucide-react';
-import { PlannerItem, PlannerMilestone } from './types';
+import { PlannerItem, PlannerMilestone, PlannerClient } from './types';
 import {
     FMTS, STATUSES, STATUS_COLORS, PLATFORMS_LIST, FREQ_LABEL,
-    DAYS_FULL, MONTHS, fmtColor, safeHref, PLATFORM_PILLS
+    DAYS_FULL, MONTHS, fmtColor, safeHref, PLATFORM_PILLS, formatDDMMAAAA
 } from './constants';
 import { ConfirmModal } from './ConfirmModal';
 import { MediaPreview } from './MediaPreview';
+import { MetaPublisher } from './MetaPublisher';
 
 interface DayDialogProps {
     mode: 'admin' | 'client';
     date: string;
+    client?: PlannerClient | null;
+    clients?: PlannerClient[];
     items: PlannerItem[];
     milestones: PlannerMilestone[];
     fichaItem: PlannerItem | null;
@@ -30,6 +33,8 @@ interface DayDialogProps {
 export function DayDialog({
     mode,
     date,
+    client,
+    clients,
     items,
     milestones,
     fichaItem,
@@ -64,12 +69,16 @@ export function DayDialog({
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-start justify-center p-3 sm:p-6 overflow-auto" onClick={backdropClick}>
-            <div className="bg-[#121212] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl my-auto overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-auto" onClick={backdropClick}>
+            <div className="bg-[#121212] border border-white/10 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl shadow-2xl my-0 sm:my-auto max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-slide-up sm:animate-fade-in">
+                {/* Mobile Drag Handle Pill */}
+                <div className="sm:hidden w-12 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
                 {fichaItem ? (
                     <FichaView
                         item={fichaItem}
                         date={date}
+                        client={client}
+                        clients={clients}
                         onBack={() => setFichaItem(null)}
                         onClose={onClose}
                         onUpdate={onUpdate}
@@ -84,7 +93,7 @@ export function DayDialog({
                                 <h2 className="font-black text-white text-base sm:text-lg capitalize">
                                     {dayName} {day} de {MONTHS[m].toLowerCase()}
                                 </h2>
-                                <p className="text-white/40 text-xs mt-0.5">{date}</p>
+                                <p className="text-white/40 text-xs mt-0.5">{formatDDMMAAAA(date)}</p>
                             </div>
                             <button
                                 onClick={onClose}
@@ -300,17 +309,26 @@ function ContentRowQuick({ item, mode, onUpdate, onDelete, onOpenFicha }: any) {
                         )}
                     </div>
 
-                    {/* Summary row + Ficha link */}
+                    {/* Summary row + Ficha link & Meta button */}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/5">
                         <span className="text-white/60 text-xs font-medium truncate">
                             {summary || 'Sin detalles extra'}
                         </span>
-                        <button
-                            onClick={onOpenFicha}
-                            className="shrink-0 text-xs text-[#F7931E] hover:text-[#F7931E]/80 font-bold transition-all flex items-center gap-1"
-                        >
-                            Ver ficha completa →
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                onClick={onOpenFicha}
+                                className="text-xs text-white/70 hover:text-white font-semibold transition-all"
+                            >
+                                Ficha →
+                            </button>
+                            <button
+                                onClick={onOpenFicha}
+                                className="text-xs text-[#F7931E] hover:text-[#F7931E]/90 bg-[#F7931E]/10 hover:bg-[#F7931E]/20 border border-[#F7931E]/30 px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5"
+                            >
+                                <Instagram className="w-3 h-3 text-pink-400" />
+                                <span>Programar en Meta</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -340,7 +358,7 @@ function ContentRowQuick({ item, mode, onUpdate, onDelete, onOpenFicha }: any) {
 }
 
 // ── Ficha Completa ─────────────────────────────────────────────────────────────
-function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: any) {
+function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode, client, clients }: any) {
     const [yStr, mStr, dStr] = date.split('-');
     const [y, m, day] = [Number(yStr), Number(mStr) - 1, Number(dStr)];
     const dayName = DAYS_FULL[new Date(y, m, day).getDay()];
@@ -400,7 +418,7 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
                                 {item.approved_by && ` (${item.approved_by})`}
                             </span>
                             {item.approved_at && (
-                                <span className="text-white/40 text-[11px]">{new Date(item.approved_at).toLocaleDateString('es-ES')}</span>
+                                <span className="text-white/40 text-[11px]">{formatDDMMAAAA(item.approved_at)}</span>
                             )}
                         </div>
                     )}
@@ -413,11 +431,11 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
                                 </span>
                             </div>
                             <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                                {item.revision_history.map(r => (
+                                {item.revision_history.map((r: any) => (
                                     <div key={r.round} className="bg-black/40 rounded-xl p-2.5 text-xs text-white/80">
                                         <div className="flex items-center justify-between text-[11px] text-white/40 mb-1">
                                             <span className="font-bold text-amber-300">Ronda #{r.round}</span>
-                                            <span>{new Date(r.date).toLocaleDateString('es-ES')}</span>
+                                            <span>{formatDDMMAAAA(r.date)}</span>
                                         </div>
                                         <p className="whitespace-pre-wrap">{r.feedback}</p>
                                     </div>
@@ -618,9 +636,19 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
                             )}
                         </div>
                         {item.material_link && (
-                            <MediaPreview url={item.material_link} title={item.title} className="mt-2" />
+                            <MediaPreview url={item.material_link} title={item.title} className="mt-2" fmt={item.fmt} />
                         )}
                     </div>
+
+                    {/* Meta Business Suite Publishing Module */}
+                    <MetaPublisher
+                        item={item}
+                        date={date}
+                        client={client || (clients?.find(c => c.id === item.client_id) ?? null)}
+                        clients={clients}
+                        onUpdate={(patch) => onUpdate(item.id, patch, item.rule)}
+                        mode={mode}
+                    />
 
                     {/* 11. Published link */}
                     <div className="md:col-span-2 space-y-1">
@@ -646,9 +674,6 @@ function FichaView({ item, date, onBack, onClose, onUpdate, onDelete, mode }: an
                                 </a>
                             )}
                         </div>
-                        {item.material_link && (
-                            <MediaPreview url={item.material_link} title={item.title} className="mt-2" />
-                        )}
                     </div>
 
                     {/* 12. Feedback / Comentarios del cliente */}

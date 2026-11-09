@@ -34,6 +34,7 @@ import { MobileDrawer } from './MobileDrawer';
 import { ConfirmModal } from './ConfirmModal';
 import { DayDialog } from './DayDialog';
 import { ClientPortalView } from './ClientPortalView';
+import { FeedView } from './FeedView';
 
 export interface PlannerAppProps {
     mode: 'admin' | 'client';
@@ -61,7 +62,43 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
     const [curClient, setCurClient] = useState<string | null>(fixedClientId ?? null);
     const [year, setYear] = useState(new Date().getFullYear());
     const [mon, setMon] = useState<number | null>(null);
-    const [tab, setTab] = useState<'calendar' | 'kanban' | 'tasks' | 'milestones' | 'queue'>('calendar');
+    const [tab, setTab] = useState<'calendar' | 'feed' | 'kanban' | 'tasks' | 'milestones' | 'queue'>('calendar');
+
+    // ── Navigation persistence on refresh (F5) ──
+    const navRestoredRef = useRef(false);
+
+    useEffect(() => {
+        if (mode === 'client' || fixedClientId || navRestoredRef.current) return;
+        try {
+            const saved = localStorage.getItem('lumen_suite_nav');
+            if (saved) {
+                const p = JSON.parse(saved);
+                if (p.suiteModule) setSuiteModule(p.suiteModule);
+                if (p.screen) setScreen(p.screen);
+                if (p.curClient !== undefined) setCurClient(p.curClient);
+                if (p.tab) setTab(p.tab);
+                if (typeof p.mon === 'number' || p.mon === null) setMon(p.mon);
+                if (p.year) setYear(p.year);
+            }
+        } catch (e) {
+            console.error('Error restaurando navegación:', e);
+        }
+        navRestoredRef.current = true;
+    }, [mode, fixedClientId]);
+
+    useEffect(() => {
+        if (mode === 'client' || fixedClientId || !navRestoredRef.current) return;
+        try {
+            localStorage.setItem('lumen_suite_nav', JSON.stringify({
+                suiteModule,
+                screen,
+                curClient,
+                tab,
+                mon,
+                year
+            }));
+        } catch {}
+    }, [suiteModule, screen, curClient, tab, mon, year, mode, fixedClientId]);
 
     // ── Dialogs & Modals state ──
     const [dlgDate, setDlgDate] = useState<string | null>(null);
@@ -213,10 +250,14 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                 } else if (e.key === '1') {
                     setTab('calendar');
                 } else if (e.key === '2') {
-                    setTab('kanban');
+                    setTab('feed');
                 } else if (e.key === '3') {
-                    setTab('tasks');
+                    setTab('kanban');
                 } else if (e.key === '4') {
+                    setTab('queue');
+                } else if (e.key === '5') {
+                    setTab('tasks');
+                } else if (e.key === '6') {
                     setTab('milestones');
                 }
             }
@@ -609,6 +650,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
     // ── Navigation helpers ──
     const goHome = () => {
         setScreen('home');
+        setCurClient(null);
         setDlgDate(null);
         setFichaItem(null);
     };
@@ -647,9 +689,9 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center">
-                <div className="text-center space-y-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#F7931E] flex items-center justify-center mx-auto animate-pulse">
+            <div suppressHydrationWarning className="min-h-screen bg-[#0D0D0D] flex items-center justify-center">
+                <div suppressHydrationWarning className="text-center space-y-4">
+                    <div suppressHydrationWarning className="w-12 h-12 rounded-2xl bg-[#F7931E] flex items-center justify-center mx-auto animate-pulse">
                         <Calendar className="w-6 h-6 text-white" />
                     </div>
                     <p className="text-white/50 text-sm font-semibold tracking-wide">Cargando Lumen Planner...</p>
@@ -666,7 +708,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
         : allClientsItems;
 
     return (
-        <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col pb-28 md:pb-8">
+        <div suppressHydrationWarning className="min-h-screen bg-[#0D0D0D] text-white flex flex-col pb-28 md:pb-8">
             {/* ══ Header ══ */}
             <header className="sticky top-0 z-30 bg-[#0D0D0D]/95 backdrop-blur-md border-b border-white/5">
                 <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
@@ -831,28 +873,6 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                             </kbd>
                         </button>
 
-                        {mode === 'admin' && (
-                            <>
-                                <input ref={fileInputRef} type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    title="Importar respaldo JSON"
-                                    className="hidden sm:flex p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white transition-all"
-                                >
-                                    <Upload className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => exportJSON(screen === 'calendar' ? curClient || undefined : undefined)}
-                                    title="Exportar respaldo JSON"
-                                    className="hidden sm:flex p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white transition-all"
-                                >
-                                    <Download className="w-3.5 h-3.5" />
-                                </button>
-                            </>
-                        )}
-
                         {mode === 'admin' && curClient && screen === 'calendar' && (
                             <button
                                 onClick={handleCopy}
@@ -977,6 +997,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                         <div className="hidden md:flex items-center gap-1 ml-2">
                             {([
                                 ['calendar', 'Calendario', Calendar],
+                                ['feed', 'Feed 3x3', Instagram],
                                 ['kanban', 'Kanban', KanbanIcon],
                                 ['queue', 'Cola', ListOrdered],
                                 ['tasks', 'Tareas', CheckSquare],
@@ -1023,19 +1044,6 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                     )}
                                 </>
                             )}
-
-                            {/* Share button */}
-                            <button
-                                onClick={handleCopy}
-                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
-                                    copied
-                                        ? 'bg-green-500/20 border-green-500/40 text-green-400'
-                                        : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
-                                }`}
-                            >
-                                {copied ? <Check className="w-3 h-3" /> : <Share2 className="w-3 h-3" />}
-                                <span className="hidden xl:inline">{copied ? 'Copiado' : 'Compartir'}</span>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1203,13 +1211,7 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
 
                                     {/* Client Management Footer */}
                                     {mode === 'admin' && client && (
-                                        <div className="mt-12 pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-4">
-                                            <button
-                                                onClick={() => exportJSON(client.id)}
-                                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white text-xs font-semibold transition-all"
-                                            >
-                                                <Download className="w-3.5 h-3.5" /> Exportar JSON de {client.name}
-                                            </button>
+                                        <div className="mt-12 pt-6 border-t border-white/5 flex flex-wrap items-center justify-end gap-4">
                                             <button
                                                 onClick={() => setClientToDelete(client)}
                                                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-all"
@@ -1220,6 +1222,15 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                     )}
                                 </div>
                             )
+                        ) : tab === 'feed' ? (
+                            <FeedView
+                                client={client ?? null}
+                                items={allItems}
+                                onOpenItem={item => {
+                                    setDlgDate(item.date);
+                                    setFichaItem(item);
+                                }}
+                            />
                         ) : tab === 'kanban' ? (
                             <KanbanView
                                 items={allItems}
@@ -1288,6 +1299,19 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                                 <Calendar className="w-4 h-4" />
                                 <span>Calendario</span>
                                 {tab === 'calendar' && (
+                                    <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => setTab('feed')}
+                                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 relative ${
+                                    tab === 'feed' ? 'text-[#F7931E]' : 'text-white/50 hover:text-white'
+                                }`}
+                            >
+                                <Instagram className="w-4 h-4" />
+                                <span>Feed 3x3</span>
+                                {tab === 'feed' && (
                                     <div className="w-1 h-1 rounded-full bg-[#F7931E]" />
                                 )}
                             </button>
@@ -1416,6 +1440,8 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                 <DayDialog
                     mode={mode}
                     date={dlgDate}
+                    client={client ?? null}
+                    clients={clients}
                     items={(curClient ? buildItems(curClient, Number(dlgDate.split('-')[0])) : allClientsItems).filter(i => i.date === dlgDate)}
                     milestones={curClient ? milestoneOn(curClient, dlgDate) : []}
                     fichaItem={fichaItem}
@@ -1456,8 +1482,6 @@ export function PlannerApp({ mode, clientId: fixedClientId }: PlannerAppProps) {
                 }}
                 onSelectClient={openClient}
                 onAddClient={addClient}
-                onExportAll={() => exportJSON()}
-                onTriggerImport={() => fileInputRef.current?.click()}
             />
 
             {/* Confirm Modal for Client Deletion */}

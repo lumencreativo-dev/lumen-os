@@ -6,10 +6,13 @@ import {
     Check, AlertCircle, Clock, Calendar, BarChart3,
     Sparkles, MessageSquare, ExternalLink, Copy, CheckCheck,
     MessageCircle, AlertTriangle, ChevronRight, ChevronLeft,
-    Eye, ShieldCheck, Flame, Info
+    Eye, ShieldCheck, Flame, Info, Download
 } from 'lucide-react';
 import { PlannerClient, PlannerItem, SuiteMetric, RevisionRecord } from './types';
-import { FMTS, STATUS_BADGE_STYLES, FMT_STYLES, PLATFORM_PILLS, todayStr, MONTHS } from './constants';
+import {
+    FMTS, STATUS_BADGE_STYLES, FMT_STYLES, PLATFORM_PILLS, todayStr, MONTHS,
+    formatDDMMAAAA, getDownloadUrl
+} from './constants';
 import { MediaPreview } from './MediaPreview';
 
 interface ClientPortalViewProps {
@@ -86,6 +89,27 @@ export function ClientPortalView({
         }
     };
 
+    // Bulk approve all pending items
+    const handleApproveAllPending = async () => {
+        if (pendingApprovalItems.length === 0) return;
+        if (!confirm(`¿Deseas aprobar todas las ${pendingApprovalItems.length} piezas pendientes de una sola vez?`)) return;
+        setIsSubmitting(true);
+        try {
+            for (const item of pendingApprovalItems) {
+                await onUpdateItem(item.id, {
+                    status: 'Aprobado',
+                    approved_at: new Date().toISOString(),
+                    approved_by: client.name
+                }, item.rule);
+            }
+            onShowToast(`🎉 ¡${pendingApprovalItems.length} publicaciones aprobadas con éxito!`);
+        } catch (e: any) {
+            onShowToast('Error al aprobar lote: ' + e?.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     // Request adjustments
     const handleSubmitFeedback = async () => {
         if (!feedbackModalItem || !feedbackText.trim()) return;
@@ -128,6 +152,19 @@ export function ClientPortalView({
         navigator.clipboard.writeText(text);
         setCopiedId(id);
         onShowToast('Copy copiado al portapapeles');
+        setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const handleCopyFullPost = (item: PlannerItem) => {
+        const parts = [
+            item.title ? `📌 ${item.title}` : '',
+            item.copy || '',
+            item.cta ? `👉 ${item.cta}` : '',
+            item.hashtags || ''
+        ].filter(Boolean).join('\n\n');
+        navigator.clipboard.writeText(parts);
+        setCopiedId(`full-${item.id}`);
+        onShowToast('📋 Publicación completa copiada');
         setTimeout(() => setCopiedId(null), 2000);
     };
 
@@ -234,7 +271,7 @@ export function ClientPortalView({
                 <div className="space-y-6">
                     {/* Welcome banner if there are approvals */}
                     {pendingApprovalItems.length > 0 ? (
-                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-[#F7931E] flex items-center justify-center shrink-0">
                                     <Clock className="w-5 h-5" />
@@ -248,6 +285,15 @@ export function ClientPortalView({
                                     </p>
                                 </div>
                             </div>
+
+                            <button
+                                onClick={handleApproveAllPending}
+                                disabled={isSubmitting}
+                                className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 active:scale-95 text-white text-xs font-bold shadow-lg shadow-green-500/20 transition-all disabled:opacity-50"
+                            >
+                                <Check className="w-4 h-4" />
+                                <span>Aprobar lote ({pendingApprovalItems.length})</span>
+                            </button>
                         </div>
                     ) : (
                         <div className="text-center py-16 bg-[#141414] border border-white/5 rounded-3xl p-8">
@@ -291,7 +337,7 @@ export function ClientPortalView({
                                                     {item.fmt}
                                                 </span>
                                                 <span className="text-white/40 text-xs font-semibold">
-                                                    📅 {new Date(item.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                    📅 {formatDDMMAAAA(item.date)}
                                                     {item.hour && ` · ${item.hour}`}
                                                 </span>
                                             </div>
@@ -321,6 +367,7 @@ export function ClientPortalView({
                                             url={item.material_link || item.canva_link}
                                             title={item.title}
                                             className="w-full"
+                                            fmt={item.fmt}
                                         />
 
                                         {/* Platforms Pills */}
@@ -344,15 +391,26 @@ export function ClientPortalView({
                                         {/* Copy Text Preview with Copy button */}
                                         {item.copy && (
                                             <div className="bg-[#181818] border border-white/5 rounded-2xl p-4 space-y-2">
-                                                <div className="flex items-center justify-between text-xs text-white/40 font-semibold">
+                                                <div className="flex items-center justify-between text-xs text-white/40 font-semibold flex-wrap gap-2">
                                                     <span>Texto / Copy del post:</span>
-                                                    <button
-                                                        onClick={() => handleCopyCopy(item.copy || '', item.id)}
-                                                        className="hover:text-white flex items-center gap-1 text-[11px] text-[#F7931E]"
-                                                    >
-                                                        {copiedId === item.id ? <CheckCheck className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
-                                                        <span>{copiedId === item.id ? 'Copiado' : 'Copiar texto'}</span>
-                                                    </button>
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => handleCopyCopy(item.copy || '', item.id)}
+                                                            className="hover:text-white flex items-center gap-1 text-[11px] text-[#F7931E]"
+                                                        >
+                                                            {copiedId === item.id ? <CheckCheck className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                                                            <span>{copiedId === item.id ? 'Copiado' : 'Copiar solo texto'}</span>
+                                                        </button>
+                                                        <span className="text-white/20">·</span>
+                                                        <button
+                                                            onClick={() => handleCopyFullPost(item)}
+                                                            className="hover:text-white flex items-center gap-1 text-[11px] text-[#F7931E]"
+                                                            title="Copia el título, copy, CTA y hashtags listos para publicar"
+                                                        >
+                                                            {copiedId === `full-${item.id}` ? <CheckCheck className="w-3 h-3 text-green-400" /> : <Sparkles className="w-3 h-3" />}
+                                                            <span>{copiedId === `full-${item.id}` ? '¡Post copiado!' : 'Copiar post completo'}</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <p className="text-white/80 text-xs sm:text-sm whitespace-pre-wrap line-clamp-4 font-normal leading-relaxed">
                                                     {item.copy}
@@ -388,7 +446,7 @@ export function ClientPortalView({
                                                         <div key={r.round} className="text-[11px] text-white/70 bg-black/40 rounded-xl p-2.5">
                                                             <div className="flex items-center justify-between text-white/40 mb-1">
                                                                 <span className="font-bold text-amber-300">Ronda #{r.round}</span>
-                                                                <span>{new Date(r.date).toLocaleDateString('es-ES')}</span>
+                                                                <span>{formatDDMMAAAA(r.date)}</span>
                                                             </div>
                                                             <p className="whitespace-pre-wrap">{r.feedback}</p>
                                                         </div>
@@ -398,7 +456,7 @@ export function ClientPortalView({
                                         )}
                                     </div>
 
-                                    {/* Action Buttons: Approve vs Request Adjustments */}
+                                    {/* Action Buttons: Approve vs Request Adjustments vs Download */}
                                     <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-3">
                                         {/* Green Big Approve Button */}
                                         <button
@@ -409,6 +467,21 @@ export function ClientPortalView({
                                             <Check className="w-4 h-4" />
                                             <span>Aprobar Pieza</span>
                                         </button>
+
+                                        {/* Direct Download button if material exists */}
+                                        {getDownloadUrl(item.material_link || item.canva_link) && (
+                                            <a
+                                                href={getDownloadUrl(item.material_link || item.canva_link)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                download
+                                                className="px-4 py-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                                title="Descargar arte o video directamente"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                                <span>Descargar</span>
+                                            </a>
+                                        )}
 
                                         {/* Request Changes Button */}
                                         <button
@@ -500,7 +573,7 @@ export function ClientPortalView({
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="text-xs font-bold text-white/50">
-                                                    📅 {item.date}
+                                                    📅 {formatDDMMAAAA(item.date)}
                                                 </span>
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${statusStyle}`}>
                                                     {item.status}
@@ -559,19 +632,19 @@ export function ClientPortalView({
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="bg-white/4 rounded-xl p-3">
                                             <span className="text-[11px] text-white/40">Seguidores</span>
-                                            <p className="text-lg font-black text-white">{m.followers.toLocaleString()}</p>
+                                            <p className="text-lg font-black text-white">{(m.followers ?? 0).toLocaleString()}</p>
                                         </div>
                                         <div className="bg-white/4 rounded-xl p-3">
                                             <span className="text-[11px] text-white/40">Alcance</span>
-                                            <p className="text-lg font-black text-[#F7931E]">{m.reach.toLocaleString()}</p>
+                                            <p className="text-lg font-black text-[#F7931E]">{(m.reach ?? 0).toLocaleString()}</p>
                                         </div>
                                         <div className="bg-white/4 rounded-xl p-3">
                                             <span className="text-[11px] text-white/40">Interacciones</span>
-                                            <p className="text-lg font-black text-blue-400">{m.engagement.toLocaleString()}</p>
+                                            <p className="text-lg font-black text-blue-400">{(m.interactions ?? 0).toLocaleString()}</p>
                                         </div>
                                         <div className="bg-white/4 rounded-xl p-3">
                                             <span className="text-[11px] text-white/40">Clics / Enlaces</span>
-                                            <p className="text-lg font-black text-emerald-400">{m.clicks.toLocaleString()}</p>
+                                            <p className="text-lg font-black text-emerald-400">{(m.clicks ?? 0).toLocaleString()}</p>
                                         </div>
                                     </div>
 
@@ -638,21 +711,34 @@ export function ClientPortalView({
                                 />
                             </div>
 
-                            <div className="flex items-center justify-end gap-3 pt-2">
-                                <button
-                                    onClick={() => setFeedbackModalItem(null)}
-                                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-semibold transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleSubmitFeedback}
-                                    disabled={!feedbackText.trim() || isSubmitting}
-                                    className="px-5 py-2.5 rounded-xl bg-[#F7931E] hover:bg-[#F7931E]/90 disabled:opacity-40 text-white text-xs font-bold shadow-lg shadow-[#F7931E]/20 transition-all flex items-center gap-1.5"
-                                >
-                                    <MessageSquare className="w-3.5 h-3.5" />
-                                    <span>Enviar a Corrección</span>
-                                </button>
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                                {client.contact_phone && feedbackText.trim() ? (
+                                    <a
+                                        href={`https://wa.me/${client.contact_phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola equipo Lumen Creativo, envié ajustes para la pieza "${feedbackModalItem.title || 'Contenido'}" (${feedbackModalItem.date}):\n\n"${feedbackText.trim()}"`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-emerald-400 hover:text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                                    >
+                                        <MessageCircle className="w-3.5 h-3.5" />
+                                        <span>Avisar también por WhatsApp</span>
+                                    </a>
+                                ) : <div />}
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setFeedbackModalItem(null)}
+                                        className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-semibold transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleSubmitFeedback}
+                                        disabled={!feedbackText.trim() || isSubmitting}
+                                        className="px-5 py-2.5 rounded-xl bg-[#F7931E] hover:bg-[#F7931E]/90 disabled:opacity-40 text-white text-xs font-bold shadow-lg shadow-[#F7931E]/20 transition-all flex items-center gap-1.5"
+                                    >
+                                        <MessageSquare className="w-3.5 h-3.5" />
+                                        <span>{isSubmitting ? 'Enviando...' : 'Enviar a Corrección'}</span>
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </div>
@@ -675,7 +761,7 @@ export function ClientPortalView({
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-white/40">📅 {selectedItemForReview.date}</span>
+                                    <span className="text-xs font-bold text-white/40">📅 {formatDDMMAAAA(selectedItemForReview.date)}</span>
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${STATUS_BADGE_STYLES[selectedItemForReview.status]}`}>
                                         {selectedItemForReview.status}
                                     </span>
@@ -695,6 +781,7 @@ export function ClientPortalView({
                             <MediaPreview
                                 url={selectedItemForReview.material_link || selectedItemForReview.canva_link}
                                 title={selectedItemForReview.title}
+                                fmt={selectedItemForReview.fmt}
                             />
 
                             {selectedItemForReview.copy && (
@@ -714,25 +801,40 @@ export function ClientPortalView({
                                 </div>
                             )}
 
-                            {selectedItemForReview.status === 'Por aprobar' && (
-                                <div className="pt-2 flex gap-3">
-                                    <button
-                                        onClick={() => handleApprove(selectedItemForReview)}
-                                        className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs py-3 rounded-2xl shadow-md flex items-center justify-center gap-2"
+                            <div className="pt-2 flex flex-wrap gap-3">
+                                {selectedItemForReview.status === 'Por aprobar' && (
+                                    <>
+                                        <button
+                                            onClick={() => handleApprove(selectedItemForReview)}
+                                            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs py-3 rounded-2xl shadow-md flex items-center justify-center gap-2"
+                                        >
+                                            <Check className="w-4 h-4" /> Aprobar Pieza
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setFeedbackModalItem(selectedItemForReview);
+                                                setSelectedItemForReview(null);
+                                            }}
+                                            className="px-4 py-3 bg-white/5 border border-white/10 text-amber-400 text-xs font-bold rounded-2xl hover:bg-white/10"
+                                        >
+                                            Pedir Ajustes
+                                        </button>
+                                    </>
+                                )}
+                                {getDownloadUrl(selectedItemForReview.material_link || selectedItemForReview.canva_link) && (
+                                    <a
+                                        href={getDownloadUrl(selectedItemForReview.material_link || selectedItemForReview.canva_link)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download
+                                        className="px-4 py-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl hover:bg-emerald-500/25 flex items-center justify-center gap-2 transition-all"
+                                        title="Descargar imagen o video directamente"
                                     >
-                                        <Check className="w-4 h-4" /> Aprobar Pieza
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setFeedbackModalItem(selectedItemForReview);
-                                            setSelectedItemForReview(null);
-                                        }}
-                                        className="px-4 py-3 bg-white/5 border border-white/10 text-amber-400 text-xs font-bold rounded-2xl hover:bg-white/10"
-                                    >
-                                        Pedir Ajustes
-                                    </button>
-                                </div>
-                            )}
+                                        <Download className="w-4 h-4" />
+                                        <span>Descargar Material</span>
+                                    </a>
+                                )}
+                            </div>
                         </motion.div>
                     </div>
                 )}

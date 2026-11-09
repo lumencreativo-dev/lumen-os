@@ -20,8 +20,6 @@ interface MobileDrawerProps {
     onGoQueue: () => void;
     onSelectClient: (clientId: string) => void;
     onAddClient: (name: string) => void;
-    onExportAll: () => void;
-    onTriggerImport: () => void;
 }
 
 export function MobileDrawer({
@@ -35,9 +33,7 @@ export function MobileDrawer({
     onGoHome,
     onGoQueue,
     onSelectClient,
-    onAddClient,
-    onExportAll,
-    onTriggerImport
+    onAddClient
 }: MobileDrawerProps) {
     const [newName, setNewName] = useState('');
     const [clientQuery, setClientQuery] = useState('');
@@ -251,29 +247,6 @@ export function MobileDrawer({
                                     <Plus className="w-3.5 h-3.5" /> Añadir
                                 </button>
                             </form>
-
-                            <div className="flex gap-2 pt-1">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        onTriggerImport();
-                                        onClose();
-                                    }}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white text-xs font-medium"
-                                >
-                                    <Upload className="w-3 h-3" /> Importar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        onExportAll();
-                                        onClose();
-                                    }}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white text-xs font-medium"
-                                >
-                                    <Download className="w-3 h-3" /> Respaldo
-                                </button>
-                            </div>
                         </div>
                     </motion.div>
                 </div>

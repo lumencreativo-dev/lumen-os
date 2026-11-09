@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-    Calendar, Clock, User, ExternalLink, ArrowRight, CheckCircle2, GripVertical
+    Calendar, Clock, User, ExternalLink, ArrowRight, CheckCircle2, GripVertical, Film
 } from 'lucide-react';
 import {
     DndContext, DragOverlay, useDraggable, useDroppable,
@@ -10,7 +10,7 @@ import {
 } from '@dnd-kit/core';
 import { PlannerItem } from './types';
 import {
-    STATUSES, STATUS_COLORS, STATUS_BADGE_STYLES, FMT_STYLES, PLATFORM_PILLS
+    STATUSES, STATUS_COLORS, STATUS_BADGE_STYLES, FMT_STYLES, PLATFORM_PILLS, formatDDMMAAAA
 } from './constants';
 
 interface KanbanViewProps {
@@ -60,7 +60,7 @@ function DraggableKanbanCard({
                     {item.fmt}
                 </span>
                 <span className="text-white/40 text-[11px] font-medium flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-[#F7931E]" /> {item.date}
+                    <Calendar className="w-3 h-3 text-[#F7931E]" /> {formatDDMMAAAA(item.date)}
                 </span>
             </div>
 
@@ -86,6 +86,11 @@ function DraggableKanbanCard({
                             <span className="text-[9px] text-white/40 font-bold">+{item.platforms.length - 3}</span>
                         )}
                     </div>
+                )}
+                {item.material_link && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <Film className="w-2.5 h-2.5" /> Drive
+                    </span>
                 )}
                 {item.responsible && (
                     <span className="text-white/40 text-[10px] flex items-center gap-1 ml-auto">
@@ -185,15 +190,18 @@ function DroppableKanbanColumn({
 // ── Main Kanban View with DND Context ─────────────────────────────────────────
 export function KanbanView({ items, mode, onUpdateStatus, onOpenCard }: KanbanViewProps) {
     const [selectedFmt, setSelectedFmt] = useState<string>('all');
+    const [onlyWithMaterial, setOnlyWithMaterial] = useState<boolean>(false);
     const [activeDragItem, setActiveDragItem] = useState<PlannerItem | null>(null);
 
     const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 6 } });
     const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } });
     const sensors = useSensors(pointerSensor, touchSensor);
 
-    const filteredItems = selectedFmt === 'all'
-        ? items
-        : items.filter(it => it.fmt === selectedFmt);
+    const filteredItems = items.filter(it => {
+        if (selectedFmt !== 'all' && it.fmt !== selectedFmt) return false;
+        if (onlyWithMaterial && !it.material_link) return false;
+        return true;
+    });
 
     const handleDragStart = (e: DragStartEvent) => {
         const item = e.active.data.current?.item as PlannerItem;
@@ -246,6 +254,20 @@ export function KanbanView({ items, mode, onUpdateStatus, onOpenCard }: KanbanVi
                                 </button>
                             );
                         })}
+
+                        <div className="h-4 w-px bg-white/10 mx-1" />
+
+                        <button
+                            onClick={() => setOnlyWithMaterial(!onlyWithMaterial)}
+                            className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                                onlyWithMaterial
+                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                    : 'text-white/50 hover:text-white bg-white/5'
+                            }`}
+                        >
+                            <Film className="w-3 h-3" />
+                            <span>Con Material Drive ({items.filter(i => i.material_link).length})</span>
+                        </button>
                     </div>
 
                     <span className="text-white/30 text-xs hidden sm:inline">
@@ -278,7 +300,7 @@ export function KanbanView({ items, mode, onUpdateStatus, onOpenCard }: KanbanVi
                                 <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-[#F7931E] text-black">
                                     {activeDragItem.fmt}
                                 </span>
-                                <span className="text-white/60 text-xs">{activeDragItem.date}</span>
+                                <span className="text-white/60 text-xs">{formatDDMMAAAA(activeDragItem.date)}</span>
                             </div>
                             <p className="text-white font-bold text-sm leading-snug truncate">
                                 {activeDragItem.title || 'Contenido sin título'}

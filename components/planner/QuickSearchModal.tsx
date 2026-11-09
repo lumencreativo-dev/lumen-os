@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, Calendar, ArrowRight, Tag } from 'lucide-react';
 import { PlannerItem } from './types';
-import { FMT_STYLES, STATUS_BADGE_STYLES } from './constants';
+import { FMT_STYLES, STATUS_BADGE_STYLES, formatDDMMAAAA } from './constants';
 
 interface QuickSearchModalProps {
     isOpen: boolean;
@@ -109,7 +109,7 @@ export function QuickSearchModal({ isOpen, onClose, items, onSelectItem }: Quick
                                                         {item.title || 'Sin título'}
                                                     </p>
                                                     <p className="text-white/40 text-xs flex items-center gap-2 mt-0.5">
-                                                        <Calendar className="w-3 h-3 text-[#F7931E]" /> {item.date}
+                                                        <Calendar className="w-3 h-3 text-[#F7931E]" /> {formatDDMMAAAA(item.date)}
                                                         {item.responsible && <span>· {item.responsible}</span>}
                                                     </p>
                                                 </div>

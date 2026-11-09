@@ -7,6 +7,9 @@ export interface PlannerClient {
     max_revisions?: number;
     contact_phone?: string;
     portal_welcome_msg?: string;
+    ig_username?: string;
+    meta_account_id?: string;
+    meta_page_id?: string;
 }
 
 export interface RevisionRecord {

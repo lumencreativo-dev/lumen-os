@@ -86,6 +86,36 @@ export const mk = (year: number, mon: number) => `${year}-${pad(mon + 1)}`;
 export const fmtColor = (name: string) => FMTS.find(f => f.name === name)?.color ?? '#9E9E9E';
 export const safeHref = (url?: string | null) => (url && url.trim().startsWith('http')) ? url.trim() : null;
 
+export function formatDDMMAAAA(dateStr?: string | null): string {
+    if (!dateStr) return '';
+    const clean = dateStr.trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(clean)) return clean;
+    const match = clean.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+        return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+    const d = new Date(clean);
+    if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    return clean;
+}
+
+export function getDownloadUrl(url?: string | null): string {
+    if (!url) return '';
+    const clean = url.trim();
+    const driveFileMatch = clean.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+        clean.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+        clean.match(/drive\.google\.com\/uc\?(?:export=view&)?id=([a-zA-Z0-9_-]+)/);
+    if (driveFileMatch && driveFileMatch[1] && !clean.includes('/folders/')) {
+        return `https://drive.google.com/uc?export=download&id=${driveFileMatch[1]}`;
+    }
+    return clean;
+}
+
 export function occursOn(rule: PlannerRule, dateStr: string): boolean {
     if (dateStr < rule.date) return false;
     const [y, m, d] = dateStr.split('-').map(Number);

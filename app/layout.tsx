@@ -38,8 +38,44 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="scroll-smooth">
-      <body className={cn(
+    <html lang="es" className="scroll-smooth" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (typeof MutationObserver !== 'undefined') {
+                    var obs = new MutationObserver(function(mutations) {
+                      for (var i = 0; i < mutations.length; i++) {
+                        var m = mutations[i];
+                        if (m.type === 'attributes' && m.attributeName === 'bis_skin_checked' && m.target && m.target.removeAttribute) {
+                          m.target.removeAttribute('bis_skin_checked');
+                        }
+                      }
+                    });
+                    obs.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['bis_skin_checked'] });
+                  }
+
+                  var origError = console.error;
+                  console.error = function() {
+                    for (var j = 0; j < arguments.length; j++) {
+                      var str = String(arguments[j] || '');
+                      if (str.indexOf('bis_skin_checked') !== -1) {
+                        return;
+                      }
+                    }
+                    origError.apply(console, arguments);
+                  };
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
+      </head>
+      <body 
+        suppressHydrationWarning
+        className={cn(
         "min-h-screen bg-lumen-clarity font-sans antialiased text-lumen-structure",
         cormorant.variable,
         inter.variable,

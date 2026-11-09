@@ -89,7 +89,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             {children}
 
             {/* Toast Container */}
-            <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+            <div suppressHydrationWarning className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
                 <AnimatePresence mode="popLayout">
                     {toasts.map(toast => {
                         const Icon = TOAST_ICONS[toast.type];
@@ -131,3 +131,4 @@ export function useToast() {
     }
     return context;
 }
+

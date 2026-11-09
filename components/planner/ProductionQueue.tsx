@@ -38,15 +38,16 @@ const URGENCY_CONFIG: Record<UrgencyLevel, {
 // ─── Date group label ────────────────────────────────────────────────────────
 const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 function groupLabel(dateStr: string, today: string): string {
-    if (dateStr === today) return '📅 Hoy';
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const formatted = `${pad(d)}/${pad(m)}/${y}`;
+    if (dateStr === today) return `📅 Hoy (${formatted})`;
     const diff = Math.round(
         (new Date(dateStr).getTime() - new Date(today).getTime()) / 864e5
     );
-    if (diff === 1) return '📅 Mañana';
-    if (diff === -1) return '📅 Ayer';
-    if (diff < 0) return `⚠️ Vencido ${Math.abs(diff)} día${Math.abs(diff) !== 1 ? 's' : ''}`;
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return `${d} ${MONTHS_SHORT[m - 1]}${y !== new Date().getFullYear() ? ' ' + y : ''}`;
+    if (diff === 1) return `📅 Mañana (${formatted})`;
+    if (diff === -1) return `📅 Ayer (${formatted})`;
+    if (diff < 0) return `⚠️ Vencido (${formatted})`;
+    return formatted;
 }
 
 // ─── Date range helpers ──────────────────────────────────────────────────────
